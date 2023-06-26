@@ -1,0 +1,508 @@
+vmhgfs-fuse .host:/ /mnt/hgfs -o subtype=vmhgfs-fuse,allow_other
+tar -xzf
+tar -xzf /bbs.tar.zip -C /zzz/bbs
+unzip pwdecrypt.zip -d ./pwdecrypt/ 
+rm -rf !(keep) #删除keep文件之外的所有文件
+
+bash: !: event not found
+原因：未开启扩展通配符
+
+shopt使用
+shopt [-psu] [optname …]
+
+-s 开启某个选项。
+-u 关闭某个选项。
+-p 列出所有可设置的选项。
+
+查看扩展通配符是否开启：shopt extglob
+开启扩展通配符：shopt -s  extglob
+
+sutt
+tt
+
+root
+puwell007
+
+touch /config/debug.sh
+rm /config/debug.sh
+
+sd卡：
+/media
+nfs:
+
+
+/usr/bin 
+zrt_app daemon_app
+
+根目录
+cd /
+
+find / -name "zrt_app"
+
+find / -name "*_app" | grep "zrt"
+
+root@mars-virtual-machine:/home/mars/.ssh# id
+uid=0(root) gid=0(root) groups=0(root)
+
+gedit /etc/exports
+
+/home/mars/nfs_share 192.168.0.0/24(rw,sync,all_squash,anonuid=1000,anongid=1000,no_subtree_check)
+
+/home/mars/nfs_share：要共享的开发主机目录
+192.168.0.0/24：配置谁可以访问，其中的/24 是掩码
+rw: 表示客户机的权限，rw 表示可读写
+sync：资料同步写入到内存与硬盘中。
+anonuid=1000：将客户机上的用户映射成指定的本地用户 ID 的用户
+anongid=998： 将客户机上的用户映射成属于指定的本地用户组 ID
+no_subtree_check：不检查子目录权限，默认配置
+————————————————
+版权声明：本文为CSDN博主「田三番」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qq_27961843/article/details/103325967
+
+测试：
+mount -t nfs localhost:/home/mars/nfs_share /mnt
+
+chmod -R 777 /mnt
+
+drwxr-x--- 该权限分为4个部分d、rwx、r-x、---。
+
+d:表示文件类型；
+
+rwx：表示文件所有者的对该文件所拥有的权限；
+
+r-x：表示文件所属组对该文件所拥有的权限；
+
+---：表示其他用户对该文件所拥有的权限。
+
+chmod -R 755 该命令表示文件所有者有读写执行权限（4+2+1）、文件所属组有读执行权限（4+1）、其他人有读执行权限（4+1）。
+
+changing permissions of '/usr': Read-only file system
+如果是系统文件出现这个问题，重新挂载根目录即可：
+mount -rw -o remount /usr
+
+查看 NFS 共享情况
+showmount -e
+
+清空屏幕快捷键：
+ctrl + l 
+
+清空当前输入快捷键：
+ctrl + u
+
+udhcpc
+mkdir /tmp/nfs_share
+mount -o vers=4 192.168.99.193:/home/mars/nfs_share /tmp/nfs_share
+
+cp zrt_app /home/mars/nfs_share/zrt_app
+cp zrt_app.debug /home/mars/nfs_share/dbg_zrt_app
+
+/tmp/nfs_share/zrt_app &
+rm -rf coredump_*
+
+
+com3
+
+115200
+
+udhcpc 设备获取ip
+
+route add 192.168.5.0 mask 255.255.255.0 192.168.2.254 if 24 -p
+
+在这个例子中：
+
+192.168.5.0表示目标网段；
+
+mask后面接掩码，255.255.255.0表示目标网段的掩码；
+
+192.168.2.254表示路由的下一跳地址，也就是，想要到达192.168.5.0的数据，本机都会发给192.168.2.254去转发；
+
+if后面接本机的网卡接口号，如果本机有多个网卡，那么就需要区分你想要用哪个网卡去访问目标网段，这里的接口号就是开头说的通过route print命令查看到的。
+
+例如我的24号接口能够通到目标网段，那么这里就输入24；
+
+“-p”这个参数表示该条路由永久生效。如果不加这个参数，那么需要注意，你的这条路由在本机重启后将会失效。
+
+route delete 192.168.19.0 mask 255.255.255.0
+
+route add 192.168.19.0 mask 255.255.255.0 192.168.19.1 if 7 -p
+相机99.186想要连接虚拟机19.129 就让网关19.1 转发
+
+linux route命令
+#添加一条路由(发往192.168.62这个网段的全部要经过网关192.168.1.1)
+route add -net 192.168.62.0 netmask 255.255.255.0 gw 192.168.1.1
+
+#删除一条路由　删除的时候不用写网关
+route del -net 192.168.122.0 netmask 255.255.255.0
+
+route add -net 192.168.19.0 netmask 255.255.255.0 gw 192.168.99.224
+
+route add 192.168.19.0 mask 255.255.255.0 0.0.0.0 if 7 -p
+
+开发板要ping通虚拟机，与其设置各种路由，不如让虚拟机和开发置于同一个路由网段下，设置虚拟机的网络配置器为 桥接模式
+
+newifi_b889  puwell007
+
+	
+g++ -v -E -x c++ -
+
+/home/mars/test/.vscode/c_cpp_properties.json
+
+                "/usr/include/c++/11",
+                "/usr/include/x86_64-linux-gnu/c++/11",
+                "/usr/include/c++/11/backward",
+                "/usr/lib/gcc/x86_64-linux-gnu/11/include",
+                "/usr/local/include",
+                "/usr/include/x86_64-linux-gnu",
+                "/usr/include"
+
+
+1. vscode全局搜索 (可搜代码，文件等)
+
+Windows:
+
+Ctrl+Shift+F
+
+怎么调试，能用断点吗还是只能靠日志理解调用顺序
+日志是哪个路径？
+
+cp /tmp/log/host.log.bak /tmp/nfs_share/zrtx.log
+cp /media/log/host.log1 /tmp/nfs_share/zrtx.log
+
+export LD_LIBRARY_PATH=/media/usr/lib:$LD_LIBRARY_PATH
+./usr/bin/gdb  zrt_app_debug
+
+export LD_LIBRARY_PATH=/tmp/nfs_share/allwinner_gdb/usr/lib:$LD_LIBRARY_PATH
+/tmp/nfs_share/allwinner_gdb/usr/bin/gdb -e zrt_app -s dbg_zrt_app
+
+chmod -R 777 /tmp/nfs_share/
+
+ 1 编译
+gcc -g -o foo foo.c
+
+2 生成单独的调试信息文件
+objcopy --only-keep-debug foo foo.dbg
+
+3 去除调试信息
+objcopy --strip-debug --strip-unneeded foo
+
+加载分离的符号表调试  
+gdb -e foo -s foo.dbg
+
+
+ZRT_MgrSignIn  ZRT_CLD_Obj()
+
+ZRT_MgrMsgProc ZRT_MEDIA_Obj()
+
+top
+ps aux|grep 2761 #2761是PID值
+
+C:\Users\admin\AppData\Roaming\Subversion
+# enable-auto-props = no
+
+调用全志api取帧发送到队列
+ZRT_GetEncStreamThread
+AW_MPI_VENC_GetStream
+ZRT_StreamProc
+ZRT_MEDIA_VIDEO_SEND
+ZRT_Msg_SendInstantMsg
+ZRT_MEDIA_VideoSend_Proc
+ZRT_Queue_AddToTail
+
+从队列取帧存卡、云、推流
+ZRT_VideoPackAndSend
+ZRT_GetFrame
+
+./configure CC="/home/mars/workspace/code/Qz-SDK/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc" --host=arm-openwrt-linux-muslgnueabi --prefix=$PWD/build
+./configure --prefix=$PWD/build
+
+
+升级固件 把固件改名为gbl_rootfs.bin，放到sd卡里，启动Daemon
+/media/gbl_rootfs.bin
+/usr/bin/Daemon &
+
+umount /media
+./fsck.fat -awy /dev/mmcblk0p1 &
+mount  /dev/mmcblk0p1  /media
+
+/tmp/nfs_share/dosfstools-4.2/build/sbin/fsck.fat -a /dev/mmcblk0p1 &
+
+
+udhcpc
+mkdir /tmp/nfs_share
+mount -o vers=4 192.168.99.193:/home/mars/nfs_share /tmp/nfs_share
+
+
+/tmp/nfs_share/dosfstools-4.2/build/sbin/fsck.fat -a /dev/mmcblk0p1
+
+df -h 查看磁盘容量
+
+fsck.fat32.project-main
+Usage: ./myfsck <options> <disk_name>
+options:
+-i: show all information
+-s: show only reserved sectors
+-f: show only files
+
+另外两个编译不过
+
+查看环境变量
+export
+
+winhex
+
+sc create svnservice binpath="C:\install\svn\bin\svnserve.exe --service -r C:\svn_repo" depend=Tcpip start=auto
+sc delete svnservice
+
+services.msc
+svn://192.168.99.224
+
+svn checkout svn://192.168.99.224/dostool_fsck --username mars --password tt
+svn checkout svn://192.168.99.224/dostool_fsck ./fsck_bk --username mars --password tt #检出到指定的fsck_bk目录
+
+将一个文件夹下的所有内容复制到另一个文件夹下
+cp -r /home/packageA/* /home/cp/packageB/
+
+
+在/etc/profile文件中添加变量【对所有用户生效（永久的）】  
+
+用vim在文件/etc/profile文件中增加变量，该变量将会对Linux下所有用户有效，并且是“永久的”。  
+
+例如 增加下列变量
+export wksp=/home/mars/workspace
+export mars=/home/mars
+export nfss=/home/mars/nfs_share
+export qz_toolchain=/home/mars/workspace/code/Qz-SDK/cross_compiler/toolchain
+
+要让刚才的修改马上生效，需要执行以下代码  
+source /etc/profile  
+
+删除环境变量:
+unset xxxxx
+
+pidof 程序名称（进程名） 查看某一程序的进程号
+ps -aux | grep redis 查看redis 进程信息
+ps -eo pid,comm,rss,vsz |grep 进程名  (其中-rss和-vsz分别是该 进程 所 占用 的实际 内存 和虚拟 内存 大小，单位是KB。)
+
+cat >test 创建test文件 ctrl+D退出
+
+svn up -r3 回退到3版本
+svn up 更新到最新版本
+
+valgrind --tool=memcheck --leak-check=full ./fsck.fat -a check-bad_names.img 检测内存泄漏
+
+sh -x xxxx.sh param1 param2 调试sh脚本
+
+qt安装器下载 https://www.qt.io/download-qt-installer-oss?hsCtaTracking=99d9dd4f-5681-48d2-b096-470725510d34%7C074ddad0-fdef-4e53-8aa8-5e8a876d6ab4
+
+linux 安装qt
+运行这个 qt-unified-linux-x64-4.6.0-online.run，缺库就安装库
+
+linux QT 开发 要cmake能找到qt的组件，需要安装下面两个库
+apt-get install build-essential libgl1-mesa-dev
+
+cmake -DCMAKE_PREFIX_PATH=/opt/Qt/6.5.1/gcc_64 ..
+
+安装ffmpeg
+1、下载解压
+
+wget http://www.ffmpeg.org/releases/ffmpeg-3.1.tar.gz
+tar -zxvf ffmpeg-3.1.tar.gz 
+2、 进入解压后目录,输入如下命令/usr/local/ffmpeg为自己指定的安装目录
+
+cd ffmpeg-3.1
+./configure --prefix=/usr/local/ffmpeg
+make && make install
+
+wget http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
+tar -zxvf yasm-1.3.0.tar.gz
+cd yasm-1.3.0
+./configure
+make && make install
+
+cmake -DCMAKE_CXX_COMPILER=C:\mingw64\bin\g++ -DCMAKE_C_COMPILER=C:\mingw64\bin\gcc 
+
+"C:\Program Files\CMake\bin\cmake.exe" --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_C_COMPILER:FILEPATH=C:\msys64\mingw64\bin\gcc.exe -DCMAKE_CXX_COMPILER:FILEPATH=C:\msys64\mingw64\bin\g++.exe -SC:/workspace/pwdecrypt -Bc:/workspace/pwdecrypt/build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH=C:\Qt\6.5.1\mingw_64
+-DCMAKE_PREFIX_PATH=C:\Qt\6.5.1\mingw_64
+
+"C:\Program Files\CMake\bin\cmake.exe" --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_C_COMPILER:FILEPATH=C:\Qt\Tools\mingw1120_64\bin\gcc.exe -DCMAKE_CXX_COMPILER:FILEPATH=C:\Qt\Tools\mingw1120_64\bin\g++.exe -SC:/workspace/pwdecrypt -Bc:/workspace/pwdecrypt/build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH=C:\Qt\6.5.1\mingw_64
+
+"C:\Program Files\CMake\bin\cmake.exe" --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_C_COMPILER:FILEPATH=C:\Qt\Tools\mingw1120_64\bin\gcc.exe -DCMAKE_CXX_COMPILER:FILEPATH=C:\Qt\Tools\mingw1120_64\bin\g++.exe -SC:/workspace/pwdecrypt -Bc:/workspace/pwdecrypt/build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH=C:\Qt\6.5.1\mingw_64
+windows 安装新版的mingw
+先安装msys2 
+然后设置源
+然后 pacman -S --needed base-devel mingw-w64-x86_64-toolchain 
+
+
+C:\Qt\Tools\CMake_64\bin\cmake.exe -S C:/workspace/pwdecrypt1 -B C:/workspace/pwdecrypt1/build "-DCMAKE_GENERATOR:STRING=Ninja" "-DCMAKE_BUILD_TYPE:STRING=Debug" "-DCMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=C:/workspace/pwdecrypt1/build.qtc/package-manager/auto-setup.cmake" "-DQT_QMAKE_EXECUTABLE:FILEPATH=C:/Qt/6.5.1/mingw_64/bin/qmake.exe" "-DCMAKE_PREFIX_PATH:PATH=C:/Qt/6.5.1/mingw_64" "-DCMAKE_C_COMPILER:FILEPATH=C:/Qt/Tools/mingw1120_64/bin/gcc.exe" "-DCMAKE_CXX_COMPILER:FILEPATH=C:/Qt/Tools/mingw1120_64/bin/g++.exe" "-DCMAKE_CXX_FLAGS_INIT:STRING=-DQT_QML_DEBUG" 
+
+fdisk -l
+lsblk
+
+
+/dev/sdb
+
+/home/mars/svn_workspace/fsck_bk/build/sbin
+
+
+udhcpc
+mkdir /tmp/nfs_share
+mount -o vers=4 192.168.99.193:/home/mars/nfs_share /tmp/nfs_share
+cd /tmp/nfs_share/scripts
+./first
+
+
+udhcpc
+mkdir /tmp/nfs_share
+mount -o vers=4 192.168.99.193:/home/mars/nfs_share /tmp/nfs_share
+cd /tmp/nfs_share/scripts
+./second
+
+
+./configure --prefix=/server/nginx --with-http_ssl_module --with-http_sub_module --add-module=../nginx-upload-module-2.3.0
+
+apt-get install libpcre3-dev  #pcre 错误
+apt-get install libssl-dev   #openssl 错误
+apt-get install zlib1g-dev
+
+chmod 666 file/folder 表示所有用户都可以读写但不能执行文件/文件夹;
+chmod 777 file/folder 允许所有用户的所有操作(一般的暴力解决办法)
+chmod 744 file/folder 只允许用户(所有者)执行所有操作;组和其他用户只允许阅读。
+
+
+nginx -s reload
+
+location / {
+            root   C:\Uploads;
+            autoindex on;                            
+			autoindex_exact_size off;            
+			autoindex_localtime on;            
+        }
+
+location /upload {
+            # Pass altered request body to this location
+            #upload_pass   @test;
+
+            # Store files to this directory
+            # The directory is hashed, subdirectories 0 1 2 3 4 5 6 7 8 9 should exist
+            upload_store /upfiles 1;
+            
+            # Allow uploaded files to be read only by user
+            upload_store_access user:r;
+
+            # Set specified fields in request body
+            upload_set_form_field "${upload_field_name}_name" $upload_file_name;
+            upload_set_form_field "${upload_field_name}_content_type" $upload_content_type;
+            upload_set_form_field "${upload_field_name}_path" $upload_tmp_path;
+
+            # Inform backend about hash and size of a file
+            upload_aggregate_form_field "${upload_field_name}_md5" $upload_file_md5;
+            upload_aggregate_form_field "${upload_field_name}_size" $upload_file_size;
+
+            upload_pass_form_field "^submit$|^description$";
+        }
+
+        # Pass altered request body to a backend
+        location @test {
+            proxy_pass   http://localhost:8288;
+        }
+
+
+        location /upload {
+            # Pass altered request body to this location
+            upload_pass   /example.php;
+
+            # Store files to this directory
+            # The directory is hashed, subdirectories 0 1 2 3 4 5 6 7 8 9 should exist
+            upload_store /upfiles 1;
+            
+            # Allow uploaded files to be read only by user
+            upload_store_access user:r;
+
+            # Set specified fields in request body
+            upload_set_form_field "${upload_field_name}_name" $upload_file_name;
+            upload_set_form_field "${upload_field_name}_content_type" $upload_content_type;
+            upload_set_form_field "${upload_field_name}_path" $upload_tmp_path;
+
+            # Inform backend about hash and size of a file
+            upload_aggregate_form_field "${upload_field_name}_md5" $upload_file_md5;
+            upload_aggregate_form_field "${upload_field_name}_size" $upload_file_size;
+
+            upload_pass_form_field "^submit$|^description$";
+        }
+
+        # Pass altered request body to a backend
+        #location @test {
+        #    proxy_pass   http://localhost:8080;
+        #}
+        location ~ \.php$ {
+     		root           html/upload;
+     	  	fastcgi_pass   127.0.0.1:9000;
+     		fastcgi_index  index.php;
+	        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        	include        fastcgi_params;
+  	  }
+
+
+ps -aux | grep nginx
+
+
+var http = require('http'); 
+var fs = require('fs'); 
+var formidable = require('formidable'); 
+ 
+// 包含上传表单的html文件
+var upload_html = fs.readFileSync("/server/nginx/html/upload.html"); 
+ 
+// 将其替换为保存上传文件的位置
+var upload_path = "/upfiles/"; 
+ 
+http.createServer(function (req, res) { 
+    if (req.url == '/uploadform') { 
+      res.writeHead(200); 
+      res.write(upload_html); 
+      return res.end(); 
+    } else if (req.url == '/fileupload') { 
+        var form = new formidable.IncomingForm(); 
+        form.parse(req, function (err, fields, files) { 
+            // oldpath：文件保存到的临时文件夹
+            var oldpath = files.filetoupload.filepath; 
+            var newpath = upload_path + files.filetoupload.name; 
+            // 将文件复制到新位置
+            fs.rename(oldpath, newpath, function (err) { 
+                if (err) throw err; 
+                // 您可能会用另一个html页面进行响应
+                res.write('File uploaded and moved!'); 
+                res.end(); 
+            }); 
+        }); 
+    }  
+ }).listen(8086);
+
+
+curl 192.168.99.224:80/xxfcgi -F "file=@/home/mars/someth/text.t" -H "FILE_NAME: text.t" -v
+
+curl localhost:6565/decrypt/upload/ -X POST -d "title=comewords&content=articleContent" -v
+
+underscores_in_headers on;
+
+location /xxfcgi{
+			fastcgi_pass        192.168.99.193:6565;
+			fastcgi_param REQUEST_METHOD $request_method;
+			client_max_body_size 100m;
+		}
+
+静态链接需要注意顺序，A程序依赖B库，B库依赖C库 那么A的makefile文件里链接顺序是 -lB -lC 是一种回溯的关系
+
+GLOB_RECURSE会把build目录里的cpp和h拉进来，需要去掉
+
+file(GLOB_RECURSE PROJECT_SOURCES ${CMAKE_SOURCE_DIR}/*.cpp ${CMAKE_SOURCE_DIR}/*.h)
+file(GLOB_RECURSE BUILD_CODE "build/*.cpp" "build/*.h")
+list(REMOVE_ITEM PROJECT_SOURCES ${BUILD_CODE})
+
+./fcgi_de264 -p 6565 -d /decrypt264/
+
+-s /decrypt264/14-10-00(002ea52b).264 -u 158897 -d 1007710900
+
+./decrypt -s /decrypt264/14-10-00\(002ea52b\).264 -u 158897 -d 1007710900
+
+"158897", "1007710900"
