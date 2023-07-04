@@ -4,6 +4,8 @@ tar -xzf /bbs.tar.zip -C /zzz/bbs
 unzip pwdecrypt.zip -d ./pwdecrypt/ 
 rm -rf !(keep) #删除keep文件之外的所有文件
 
+zip -r html.zip ./html
+
 bash: !: event not found
 原因：未开启扩展通配符
 
@@ -218,7 +220,7 @@ ZRT_GetFrame
 
 升级固件 把固件改名为gbl_rootfs.bin，放到sd卡里，启动Daemon
 /media/gbl_rootfs.bin
-/usr/bin/Daemon &
+/usr/bin/Daemon_app &
 
 umount /media
 ./fsck.fat -awy /dev/mmcblk0p1 &
@@ -506,3 +508,69 @@ list(REMOVE_ITEM PROJECT_SOURCES ${BUILD_CODE})
 ./decrypt -s /decrypt264/14-10-00\(002ea52b\).264 -u 158897 -d 1007710900
 
 "158897", "1007710900"
+
+<p>
+            <a href="/download/t.txt" download="文件名.txt">点击下载</a>
+        </p>
+
+查看可执行程序依赖的库： objdump -x 可执行程序名| grep NEEDED.
+
+库的链接时路径和运行时路径
+
+    现代连接器在处理动态库时将链接时路径（Link-time path）和运行时路径（Run-time path）分开,用户可以通过-L指定连接时库的路径，通过-R（或-rpath）指定程序运行时库的路径，大大提高了库应用的灵活性。
+
+-Wl,-rpath=./ 
+-Wl表示链接时将当前目录传递
+-rpath表示运行时搜索当前目录
+
+程序部署不能直接将二进制文件拷贝到目标机器或服务器上，需要先找到目标机器的工具链交叉编译打包，才能部署
+
+利用__attribute__((section()))构建初始化函数表
+
+ZRT_WIFI_MODE
+
+make
+cp zrt_app $nfss -v
+
+
+{
+    "configurations": [
+        {
+            "name": "(gdb) 启动",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/fcgi_de264",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "将反汇编风格设置为 Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ],
+    "version": "2.0.0"
+}
+
+ffmpeg -i "C:\testdata\14-10-00(002ea52b)-decrypted0.mp4" -vcodec copy -an -bsf:v h264_mp4toannexb  "C:\testdata\raw.h264"
+
+其中：
+
+-i是输入文件名
+
+-vcodec copy是指直接解复用，不解码，copy到目的文件
+
+-an audio none，禁用音频文件
+
+-bsf:v h264_mp4toannexb mp4有两种startCode模式，这里用annexb模式。
