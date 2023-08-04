@@ -214,11 +214,16 @@ ZRT_Queue_AddToTail
 ZRT_VideoPackAndSend
 ZRT_GetFrame
 
-./configure CC="/home/mars/workspace/code/Qz-SDK/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc" --host=arm-openwrt-linux-muslgnueabi --prefix=$PWD/build
+./configure CC="/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc" --host=arm-openwrt-linux-muslgnueabi --prefix=$PWD/build
 ./configure --prefix=$PWD/build
 
+./configure CC="/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc" --host=arm-openwrt-linux-muslgnueabi --prefix=$PWD/build CFLAGS=-static
 
-升级固件 把固件改名为gbl_rootfs.bin，放到sd卡里，启动Daemon
+./configure CC="/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc" --host=arm-openwrt-linux-muslgnueabi --prefix=$PWD/build CFLAGS=-static LDFLAGS="-L/extern/v853/out/v851se-perf1/staging_dir/target/usr/lib/"
+
+
+
+升级固件 把固件PUWELL_PA_Q851SE+8188_16M_V7.02.81_20230802.bin改名为gbl_rootfs.bin，放到sd卡里，启动Daemon
 /media/gbl_rootfs.bin
 /usr/bin/Daemon_app &
 
@@ -232,6 +237,10 @@ mount  /dev/mmcblk0p1  /media
 udhcpc
 mkdir /tmp/nfs_share
 mount -o vers=4 192.168.99.193:/home/mars/nfs_share /tmp/nfs_share
+
+        sleep 17
+        echo "iperf start"
+        /media/iperf3/iperf_run.sh &
 
 
 /tmp/nfs_share/dosfstools-4.2/build/sbin/fsck.fat -a /dev/mmcblk0p1
@@ -260,6 +269,10 @@ svn://192.168.99.224
 
 svn checkout svn://192.168.99.224/dostool_fsck --username mars --password tt
 svn checkout svn://192.168.99.224/dostool_fsck ./fsck_bk --username mars --password tt #检出到指定的fsck_bk目录
+svn checkout https://192.168.10.195:448/svn/Qz-IPC/trunk/tina-v853 ./v853 --username zhongxt --password 123456
+svn export https://192.168.10.195:448/svn/Qz-IPC/trunk/tina-v853 ./v853 --username zhongxt --password 123456
+
+svn checkout svn://192.168.10.246/server/Qz-SDK ./qzsdk --username zhongxt --password 123456
 
 将一个文件夹下的所有内容复制到另一个文件夹下
 cp -r /home/packageA/* /home/cp/packageB/
@@ -574,3 +587,210 @@ ffmpeg -i "C:\testdata\14-10-00(002ea52b)-decrypted0.mp4" -vcodec copy -an -bsf:
 -an audio none，禁用音频文件
 
 -bsf:v h264_mp4toannexb mp4有两种startCode模式，这里用annexb模式。
+
+fw_printenv mac
+
+
+pip3 install torch torchvision torchaudio
+2.0.1+cpu
+
+cp -r /home/mars/nfs_share/upload_pic /mnt/hgfs/share/
+
+#define UPLOAD_PIC_PATH "/config/upload_pic/"
+static int count=0;
+void file_write(char* filepath,char* buf,int len){
+	FILE* fp = fopen(filepath, "wb");
+	if(!fp) return;
+    fwrite(buf, len, 1, fp);
+	fclose(fp);
+	ZRT_LOG_INFO("write file %s\n",filepath);
+	count++;
+}
+
+
+char* file_read(char* filepath,int *size)
+{
+	FILE *fp = fopen(filepath, "rb");
+	if (!fp)
+		return 0;
+	fseek(fp, 0, SEEK_END);
+	*size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	char *tmp = (char *)malloc(*size * sizeof(char));
+	fread(tmp, *size, 1, fp);
+	ZRT_LOG_INFO("read file %s, size: %d\n",filepath, *size);
+	return tmp;
+}
+
+
+
+	int file_len = 0;
+	char *pic1 = file_read("/config/fire/fire1.jpg", &file_len);
+	Picture_Server_Upload(obj, pic1, file_len);
+	free(pic1);
+
+	sleep(1);
+	char *pic2 = file_read("/config/fire/fire2.jpg", &file_len);
+	Picture_Server_Upload(obj, pic2, file_len);
+	free(pic2);
+	
+	return 0;
+
+if (res_body && (res_body->reco_info.lKindNo & (1 << FIRE)))
+			{
+				ZRT_LOG_INFO("detect fire, alarm\n");
+			}
+			ZRT_LOG_INFO("AI_RECOGNITION: %d\n",res_body->reco_info.lKindNo);
+
+
+40:6A:8E:FF:29:01
+
+fw_printenv mac
+
+406A8EFF2901
+
+VALGRIND_LIB=/media/usr/lib/valgrind ./usr/bin/valgrind zrt_app
+
+
+ shared libraries: libstdc++.so.6: cannot open shared object file
+
+ apt-get install lib32stdc++6
+
+ 为/root目录创建软连接
+[root@localhost ~]# ln -s /root /etc/root1
+
+
+
+export LD_LIBRARY_PATH=/media/usr/lib:$LD_LIBRARY_PATH
+./usr/bin/gdb  zrt_app_debug
+
+
+wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
+./wpad wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
+
+wpa_cli -i wlan0 scan              #扫描附近热点
+wpa_cli -i wlan0 scan_result       #打印热点信息
+
+wpa_cli -i wlan0 add_network       # 添加一个网络连接,并返回网络ID号,如果wpa_supplicant.conf文件为空,则返回0,表示第一个热点,然后该ID号会在连接热点用到
+wpa_cli -i wlan0 set_network 0 ssid '"Redmi_87C0_2G"'    #设置ID为0的热点SSID
+wpa_cli -i wlan0 set_network 0 psk '"88888888"'    #设置ID为0的热点的密码
+
+如果是没有加密的公共网络,则输入以下密码:
+wpa_cli -i wlan0 set_network 0 key_mgmt NONE
+
+wpa_cli -i wlan0 get_capability key_mgmt
+
+wpa_cli -i wlan0 set_network 0 priority 2     //设置当前网络优先级,默认为2
+wpa_cli -i wlan0 set_network 0 scan_ssid 1    //设置ssid默认为1即可
+wpa_cli -i wlan0 enable_network 0            //启动连接ID为0的网络
+
+wpa_cli -i wlan0 select_network 0             //选择网络0(这样做的好处在于,可以取消先前的其它网络连接)
+
+udhcpc -b -i wlan0 -q    
+         //此时只是连接上,所以还要自动分配IP地址,-b:后台(back) –i:指定接口 –q:获得续约后退出
+
+wpa_cli -i wlan0 set_network 0 ieee80211w 2
+wpa_cli -i wlan0 set_network 0 key_mgmt SAE
+
+
+wpa_cli -i wlan0 save_config    //保存当前连接的网络配置到wpa_supplicant.conf文件中,使得下次自动连接
+
+
+root@(none):~# wpa_cli -i wlan0 enable_network 0   
+OK
+root@(none):~# [10751.912927] RTW: wlan0- hw port(0) mac_addr =c4:3c:b0:74:bc:d3
+[10751.920170] RTW: wlan1- hw port(1) mac_addr =c6:3c:b0:74:bc:d3
+[10751.938753] RTW: nolinked power save leave
+wlan0: Trying to associate with [10753.807064] RTW: rtw_set_802_11_connect(wlan0)  fw_state=0x00000000
+a4:39:b3:76:b8:41 (SSID='Redmi_87C0' freq=2442 MHz)
+[10753.941748] RTW: start auth
+[10753.957093] RTW: auth success, start assoc
+[10754.015454] RTW: assoc success
+wlan0: Associated with a4:39:b3:76:b8:41
+wlan0: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0
+[10754.027674] RTW: ============ STA [a4:39:b3:76:b8:41]  ===================
+[10754.036168] RTW: mac_id : 0
+[10754.039288] RTW: wireless_mode : 0x0b
+[10754.043418] RTW: mimo_type : 0
+[10754.046993] RTW: bw_mode : 20MHz, ra_bw_mode : 20MHz
+[10754.052584] RTW: rate_id : 3
+[10754.055818] RTW: rssi : 56 (%), rssi_level : 0
+[10754.060798] RTW: is_support_sgi : Y, is_vht_enable : N
+[10754.066549] RTW: disable_ra : N, disable_pt : N
+[10754.071621] RTW: is_noisy : N
+[10754.074942] RTW: txrx_state : 0
+[10754.078540] RTW: curr_tx_rate : CCK_1M (L)
+[10754.083146] RTW: curr_tx_bw : 20MHz
+[10754.087053] RTW: curr_retry_ratio : 0
+[10754.091153] RTW: ra_mask : 0x00000000000fffff
+[10754.091153] 
+[10754.148732] RTW: recv eapol packet
+[10754.153059] RTW: send eapol packet
+[10754.170472] RTW: recv eapol packet
+[10754.174607] RTW: send eapol packet
+[10754.178822] RTW: set pairwise key camid:0, addr:a4:39:b3:76:b8:41, kid:0, type:AES
+wlan0: WPA: Key negotiation comp[10754.188011] IPv6: ADDRCONF(NETDEV_CHANGE): wlan0: link becomes ready
+leted with a4:39:b3:76:b8:41 [PTK=CCMP GTK=CCMP]
+wlan0: CTRL-EV[10754.201193] RTW: set group key camid:1, addr:a4:39:b3:76:b8:41, kid:1, type:AES
+ENT-CONNECTED - Connection to a4:39:b3:76:b8:41 completed [id=0 id_str=]
+
+
+apt-get install  libncurses5-dev gawk
+
+multiple definition of `yylloc` gcc版本过高
+
+find . -name "wpad"|xargs -i ls -l {}
+
+find . -name "test*"|xargs -i cp {} /media
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/media
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/media/iperf3
+
+vscode  Ctrl+D 选词
+
+
+ssh win免密登录linux设置
+1 生成密钥对 将在C:\User\name\.ssh 目录下生成
+2 将公钥内容拷贝到linux服务器的 ~/.ssh/authorized_keys文件中
+3 用ssh root@192.168.x.x -i C:\User\name\.ssh\id_rsa 测试登录
+
+IdentityFile "C:\Users\admin\.ssh\id_rsa"
+
+/v853/external/eyesee-mpp/middleware/sun8iw21/media/LIBRARY
+
+vscode 的缓存文件 都存在这里 C:\Users\admin\AppData\Roaming\Code
+
+C:\Users\admin\AppData\Roaming\Code\User\workspaceStorage
+
+生成一个10m的文件
+dd if=/dev/zero of=./file.txt bs=1M count=10 
+
+ ./iperf3 -c 192.168.99.224 -u -b 100M -f M
+ ./iperf3 -c 192.168.99.224 
+
+ SDK_DIR=/extern/v853
+PROJECT_DIR=/home/mars/workspace/code/qzsdk
+
+/media/iperf3/iperf_run.sh &
+
+恢复sdk默认配置
+target\allwinner\v851se-perf1/defconfig 
+
+cleanmpp
+mkmpp
+
+
+svn revert --recursive .
+
+svn st | grep '^?' | awk '{print $2}' | xargs rm -rf 清理未跟踪文件
+
+svn info 查看当前版本
+svn status 查看更改的文件
+svn diff -r 28:25 [something]
+svn update -r [版本号] 回滚到指定版本
+
+svn update -r 283
+
+echo '1:2:3' |tr -d : #用tr命令删除输出的字符串中:  
+cat test.txt |tr -d : #用tr命令删除输出的字符串中:  
+echo '1:2:3' |tr ':' ',' #用tr命令替换输出的字符串中:  
