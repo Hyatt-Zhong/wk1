@@ -664,6 +664,10 @@ VALGRIND_LIB=/media/usr/lib/valgrind ./usr/bin/valgrind zrt_app
 export LD_LIBRARY_PATH=/media/usr/lib:$LD_LIBRARY_PATH
 ./usr/bin/gdb  zrt_app_debug
 
+gdb调试 coredump 
+gdb program coredump
+例如 /media/usr/bin/gdb /media/zrt_app /media/coredump_974_ZRT_MediaDataTh
+
 
 wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
 ./wpad wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
@@ -794,3 +798,14 @@ svn update -r 283
 echo '1:2:3' |tr -d : #用tr命令删除输出的字符串中:  
 cat test.txt |tr -d : #用tr命令删除输出的字符串中:  
 echo '1:2:3' |tr ':' ',' #用tr命令替换输出的字符串中:  
+
+C:sshkey/key tt
+
+解决这种问题需要进行设置,不让他自动转义,执行命令(命令的意思是开启目录扩展,-s是打开):
+shopt -s direxpand
+
+在~/.bashrc文件后加入shopt -s direxpand一行
+然后 source ~/.bashrc可全局生效
+
+export LD_LIBRARY_PATH=/media/usr/lib:$LD_LIBRARY_PATH
+./usr/bin/gdb  zrt_app_debug
