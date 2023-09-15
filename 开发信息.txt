@@ -1,3 +1,10 @@
+fsck 内存映射
+视频解密 nginx
+onvif rstp
+火警检测 
+升级md5校验
+
+
 vmhgfs-fuse .host:/ /mnt/hgfs -o subtype=vmhgfs-fuse,allow_other
 tar -xzf
 tar -xzf /bbs.tar.zip -C /zzz/bbs
@@ -61,6 +68,12 @@ no_subtree_check：不检查子目录权限，默认配置
 版权声明：本文为CSDN博主「田三番」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
 原文链接：https://blog.csdn.net/qq_27961843/article/details/103325967
 
+修改完/etc/exports文件并保存后，可使用exportfs命令更新配置：
+#以下命令在主机上运行
+sudo exportfs -arv
+
+showmount -e
+
 测试：
 mount -t nfs localhost:/home/mars/nfs_share /mnt
 
@@ -100,6 +113,8 @@ cp zrt_app.debug /home/mars/nfs_share/dbg_zrt_app
 
 /tmp/nfs_share/zrt_app &
 rm -rf coredump_*
+
+mount -o vers=4 192.168.99.193:/extern/nfs_media /media
 
 
 com3
@@ -174,7 +189,7 @@ export LD_LIBRARY_PATH=/media/usr/lib:$LD_LIBRARY_PATH
 ./usr/bin/gdb  zrt_app_debug
 
 export LD_LIBRARY_PATH=/tmp/nfs_share/allwinner_gdb/usr/lib:$LD_LIBRARY_PATH
-/tmp/nfs_share/allwinner_gdb/usr/bin/gdb -e zrt_app -s dbg_zrt_app
+/tmp/nfs_share/allwinner_gdb/usr/bin/gdb -e zrt_app -s dbg_zrt_app -c coredump
 
 chmod -R 777 /tmp/nfs_share/
 
@@ -273,6 +288,17 @@ svn checkout https://192.168.10.195:448/svn/Qz-IPC/trunk/tina-v853 ./v853 --user
 svn export https://192.168.10.195:448/svn/Qz-IPC/trunk/tina-v853 ./v853 --username zhongxt --password 123456
 
 svn checkout svn://192.168.10.246/server/Qz-SDK ./qzsdk --username zhongxt --password 123456
+svn checkout https://192.168.10.195:448/svn/ipc/trunk/libonvif ./onvif --username zhongxt --password 123456
+
+svn checkout https://192.168.10.195:448/svn/ipc/trunk/librtsp/LIBRTSPRTP_V1.0.0.0_R20130603 ./rtsplib --username zhongxt --password 123456
+svn checkout https://192.168.10.195:448/svn/ipc/trunk/libhttp/LIBHTTP_V1.0.0.0_R20130603 ./http --username zhongxt --password 123456
+svn checkout https://192.168.10.195:448/svn/ipc/trunk/libinfra/LIBINFRA_V1.0.0.0_R20130603 ./thread_and_mutex --username zhongxt --password 123456
+svn checkout https://192.168.10.195:448/svn/ipc/trunk/libstream_reader/LIBSTREAMREADER_V1.0.0.0_R20130603 ./stream_reader --username zhongxt --password 123456
+svn checkout https://192.168.10.195:448/svn/ipc/trunk/libtpbase/LIBTPBASE_V1.0.0.0_R20130603 ./tpbase --username zhongxt --password 123456
+svn checkout https://192.168.10.195:448/svn/ipc/trunk/libtpbase_x/LIBTPBASE_X_V1.0.0.0_R20190306 ./tpbase_x --username zhongxt --password 123456
+
+svn checkout svn://192.168.10.246/server/Qz-SDK ./packapp --username zhongxt --password 123456
+
 
 将一个文件夹下的所有内容复制到另一个文件夹下
 cp -r /home/packageA/* /home/cp/packageB/
@@ -667,6 +693,7 @@ export LD_LIBRARY_PATH=/media/usr/lib:$LD_LIBRARY_PATH
 gdb调试 coredump 
 gdb program coredump
 例如 /media/usr/bin/gdb /media/zrt_app /media/coredump_974_ZRT_MediaDataTh
+usr/bin/gdb -e x_app -c coredump_872_x_app -s x.dbg
 
 
 wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
@@ -809,3 +836,148 @@ shopt -s direxpand
 
 export LD_LIBRARY_PATH=/media/usr/lib:$LD_LIBRARY_PATH
 ./usr/bin/gdb  zrt_app_debug
+/media/usr/bin/gdb -e zrt_app -s zrt_app.debug -c coredump_
+
+
+md5sum 
+
+VERSION=7.02.93test
+
+
+BUILD_SDK=y
+BUILD_MPP=n
+BUILD_PACKUPDATE=n
+BUILD_LIBS=n
+BUILD_DAEMON=n
+BUILD_APP=y
+BUILD_FUSE=n
+BUILD_PRODUCTION=n
+BUILD_TESTBOARD=n
+
+
+SDK_DIR=/extern/v853
+PROJECT_DIR=/home/mars/workspace/code/package
+
+pack/8M/rootfs/build_rootfs.sh
+#rm ./etc/init.d/S50netadb
+
+简化find命令
+alias findx='/command/find.sh'
+find.sh脚本
+#set -x
+#path=$(readlink -f $1)
+#echo $path
+if [ $# != 2 ];then
+       exit
+fi
+if [ -z $1 ] || [ -z "$2" ]; then
+        echo param is null p1=$1 p2=$2
+else
+        find $1 -name "$2"
+fi
+
+makefile make不是执行all目标而是执行第一个目标，所以一般把all目标放在第一个位置
+
+"workbench.colorCustomizations": {
+        //"editor.selectionHighlightBorder": "#00ff15", // 高亮
+        "editor.selectionBackground": "#f003ffa6",
+        //"editor.selectionForeground": "#404245",
+        //"editor.selectionHighlightBackground": "#098709",
+
+        "editor.wordHighlightBackground": "#1c5e84a5",
+        "editor.wordHighlightBorder": "#00ff0d",
+        //"editor.wordHighlightStrongBackground": "#ff0000",
+        //"editor.wordHighlightStrongBorder": "#ff0000",
+        //"editor.wordHighlightTextBackground": "#ff0000",
+        //"editor.wordHighlightTextBorder": "#ff0000",
+        
+        "editor.findMatchBackground": "#f003ffa6",//搜索匹配的背景色
+        "editor.findMatchHighlightBackground": "#f003ffa6",
+        //"editor.findRangeHighlightBackground": "#ff9900",
+        "editorOverviewRuler.findMatchForeground": "#17ff02",//右侧滚动条高亮
+        "scrollbarSlider.background": "#bba76d",
+        "scrollbarSlider.hoverBackground": "#cfb56a",
+        "scrollbarSlider.activeBackground": "#fbdd86"
+        },
+
+
+
+if(1 == judge_UnitCamera_device()){
+		ZRT_LOG_INFO("SetAwbStatsSyncMode:ISP0_ISP1_COMBINE\n");
+		AW_MPI_ISP_SetAwbStatsSyncMode(1, ISP0_ISP1_COMBINE); 
+	}
+
+
+h264 的i帧前面需要有spspps信息，比如我从一个相机里能得到IPPPPPPIPPPPIPPPPPP这样的原始帧数据，我要将它写入到.h264文件中并能够播放，我需要在每个I帧前插入spspps信息
+
+
+if(iProfileIdx < 2 && (ZRT_ABS_hasMotor() || ZRT_ABS_isZoomCamera()))
+
+DESCRIBE rtsp
+
+/media/DownloadTest http://ush.ipc365.com:8080/httpdownload/download/PUWELL_PA2_Q851SE+8188_16M_V7.02.76_20230707.bin /media/xx.bin
+
+查看目录dir下1层文件或目录所占的空间
+du -h --max-depth=1 /dir |sort -rh
+
+查看固件版本
+cat /etc/version.conf
+
+perror.c
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+int main(int argc, char *argv[])
+{
+    if (argc <= 1)
+    {
+        return 0;
+    }
+    int no = atoi(argv[1]);
+    printf("errno %d: %s\n", no, strerror(no));
+
+    return 0;
+}
+
+把程序拷贝到 /usr/local/bin/ 目录 可以被命令行调用
+
+
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = torch.nn.Sequential(
+            torch.nn.Conv2d(1, 10, kernel_size=5),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(kernel_size=2),
+        )
+        self.conv2 = torch.nn.Sequential(
+            torch.nn.Conv2d(10, 20, kernel_size=5),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(kernel_size=2),
+        )
+        self.fc = torch.nn.Sequential(
+            torch.nn.Linear(320, 50),
+            torch.nn.Linear(50, 10),
+        )
+
+    def forward(self, x):
+        batch_size = x.size(0)
+        x = self.conv1(x)  # 一层卷积层,一层池化层,一层激活层(图是先卷积后激活再池化，差别不大)
+        x = self.conv2(x)  # 再来一次
+        x = x.view(batch_size, -1)  # flatten 变成全连接网络需要的输入 (batch, 20,4,4) ==> (batch,320), -1 此处自动算出的是320
+        x = self.fc(x)
+        return x  # 最后输出的是维度为10的，也就是（对应数学符号的0~9）
+
+LeNet-5：由Yann LeCun等人于1998年提出的卷积神经网络，是第一个成功应用于手写数字识别任务的深度学习模型。
+
+AlexNet：由Alex Krizhevsky等人于2012年提出的卷积神经网络，是第一个在ImageNet图像分类挑战赛中取得显著优势的模型，引发了深度学习的热潮。
+
+VGGNet：由Karen Simonyan和Andrew Zisserman于2014年提出的卷积神经网络，通过增加网络的深度和参数量，取得了更好的性能，在ImageNet挑战赛中取得了优异的成绩。
+
+GoogLeNet：由Christian Szegedy等人于2014年提出的卷积神经网络，采用了Inception模块的结构，大幅减少了参数量，提高了网络的效率和性能。
+
+ResNet：由Kaiming He等人于2015年提出的残差神经网络，通过引入残差连接解决了深层网络训练时的梯度消失和梯度爆炸问题，使得网络可以更深更容易训练。
+
+LSTM：由Sepp Hochreiter和Jürgen Schmidhuber于1997年提出的长短期记忆网络，通过引入门控机制解决了传统循环神经网络中的梯度消失问题，成为处理序列数据的重要模型。
+
+GAN：由Ian Goodfellow等人于2014年提出的生成对抗网络，通过博弈的方式训练生成器和判别器，可以生成逼真的样本，被广泛应用于图像生成和图像编辑等领域。
