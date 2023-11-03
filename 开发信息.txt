@@ -6,6 +6,7 @@ onvif rstp
 
 
 vmhgfs-fuse .host:/ /mnt/hgfs -o subtype=vmhgfs-fuse,allow_other
+tar -zcvf include.tar.gz include/
 tar -xzf
 tar -xzf /bbs.tar.zip -C /zzz/bbs
 unzip pwdecrypt.zip -d ./pwdecrypt/ 
@@ -699,6 +700,7 @@ usr/bin/gdb -e x_app -c coredump_872_x_app -s x.dbg
 wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
 ./wpad wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
 
+
 wpa_cli -i wlan0 scan              #扫描附近热点
 wpa_cli -i wlan0 scan_result       #打印热点信息
 
@@ -725,6 +727,23 @@ wpa_cli -i wlan0 set_network 0 key_mgmt SAE
 
 
 wpa_cli -i wlan0 save_config    //保存当前连接的网络配置到wpa_supplicant.conf文件中,使得下次自动连接
+
+从文件中获取wlan0的网卡地址
+cat /sys/class/net/wlan0/address
+
+
+完整的联网流程
+wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
+
+wpa_cli -i wlan0 add_network
+wpa_cli -i wlan0 set_network 0 ssid '"newifi_b889"'
+wpa_cli -i wlan0 set_network 0 psk '"puwell007"'
+wpa_cli -i wlan0 select_network 0 
+wpa_cli -i wlan0 enable_network 0 
+udhcpc -iwlan0
+
+
+/etc/init.d/run.sh
 
 
 root@(none):~# wpa_cli -i wlan0 enable_network 0   
@@ -807,8 +826,11 @@ PROJECT_DIR=/home/mars/workspace/code/qzsdk
 恢复sdk默认配置
 target\allwinner\v851se-perf1/defconfig 
 
+打包出错了先用make看一下具体哪里报错，因为打包用的是make -j32多线程编译
+一般的，可以先清理mpp 然后再mkmpp
 cleanmpp
 mkmpp
+成功后再make -j32一般没问题
 
 
 svn revert --recursive .
@@ -819,6 +841,10 @@ svn info 查看当前版本
 svn status 查看更改的文件
 svn diff -r 28:25 [something]
 svn update -r [版本号] 回滚到指定版本
+
+要查看远程版本库的日志并限制为5个记录，可以使用以下命令：
+
+svn log -l 5 <远程目录URL>
 
 svn update -r 283
 
@@ -943,41 +969,96 @@ int main(int argc, char *argv[])
 把程序拷贝到 /usr/local/bin/ 目录 可以被命令行调用
 
 
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = torch.nn.Sequential(
-            torch.nn.Conv2d(1, 10, kernel_size=5),
-            torch.nn.ReLU(),
-            torch.nn.MaxPool2d(kernel_size=2),
-        )
-        self.conv2 = torch.nn.Sequential(
-            torch.nn.Conv2d(10, 20, kernel_size=5),
-            torch.nn.ReLU(),
-            torch.nn.MaxPool2d(kernel_size=2),
-        )
-        self.fc = torch.nn.Sequential(
-            torch.nn.Linear(320, 50),
-            torch.nn.Linear(50, 10),
-        )
 
-    def forward(self, x):
-        batch_size = x.size(0)
-        x = self.conv1(x)  # 一层卷积层,一层池化层,一层激活层(图是先卷积后激活再池化，差别不大)
-        x = self.conv2(x)  # 再来一次
-        x = x.view(batch_size, -1)  # flatten 变成全连接网络需要的输入 (batch, 20,4,4) ==> (batch,320), -1 此处自动算出的是320
-        x = self.fc(x)
-        return x  # 最后输出的是维度为10的，也就是（对应数学符号的0~9）
 
-LeNet-5：由Yann LeCun等人于1998年提出的卷积神经网络，是第一个成功应用于手写数字识别任务的深度学习模型。
+ifconfig eth0 down
+ifconfig eth0 hw ether 0a:1b:b4:00:89:0e
+ifconfig eth0 up
 
-AlexNet：由Alex Krizhevsky等人于2012年提出的卷积神经网络，是第一个在ImageNet图像分类挑战赛中取得显著优势的模型，引发了深度学习的热潮。
+/usr/sbin/wpa_cli
 
-VGGNet：由Karen Simonyan和Andrew Zisserman于2014年提出的卷积神经网络，通过增加网络的深度和参数量，取得了更好的性能，在ImageNet挑战赛中取得了优异的成绩。
+目前全志系列的固件版本为：p1--变焦枪球，p3--三目拼接，p7--小蛋，7.02.XX--常规/拼接枪球，7.20.XX.T1--低功耗
 
-GoogLeNet：由Christian Szegedy等人于2014年提出的卷积神经网络，采用了Inception模块的结构，大幅减少了参数量，提高了网络的效率和性能。
+wifi信息存在 /config/cfg.txt
 
-ResNet：由Kaiming He等人于2015年提出的残差神经网络，通过引入残差连接解决了深层网络训练时的梯度消失和梯度爆炸问题，使得网络可以更深更容易训练。
+/media/usr/bin/gdb  -e zrt_app -s zrt_app.debug -c coredump_1031_CLD_InitThread
 
-LSTM：由Sepp Hochreiter和Jürgen Schmidhuber于1997年提出的长短期记忆网络，通过引入门控机制解决了传统循环神经网络中的梯度消失问题，成为处理序列数据的重要模型。
+gcc 高亮错误
+-g -fdiagnostics-color=always
 
-GAN：由Ian Goodfellow等人于2014年提出的生成对抗网络，通过博弈的方式训练生成器和判别器，可以生成逼真的样本，被广泛应用于图像生成和图像编辑等领域。
+全志 v853芯片
+格科微 gc2083 sensor
+Camera Compact Module 摄像头模组
+南阳禾立光电
+
+只想看已经被修改的文件，你可以使用grep命令过滤输出，像这样：
+svn status | grep '^M'
+
+
+Tina_Linux_系统软件_开发指南.pdf
+
+
+
+如果解密不出来可以用这个解密试试 C:\重要文档\pwdecrypt-fix
+
+httpclient_response_parse
+ZRT_LOG_INFO("%-128s\n",data);
+
+
+SDK_DIR=/extern/Puwell-V853
+PROJECT_DIR=/home/mars/workspace/code/qzsdk
+
+repo清除所有修改及更新命令
+repo forall -c "pwd;git clean -f;git checkout -f";repo sync -c --no-tags;repo sync -l;
+
+
+patch -p1 < xx.patch 表示将xx补丁打入当前目录，并去掉前第一个路径
+patch -p1 -R < xx.patch 卸载补丁
+patch -p0       (“p”指的是路径，后面的数字表示去掉路径的第几部分。"0"，表示不去掉，为全路径)
+patch -p1       (“p”后面的数字"1"，表示去掉前第一个路径)
+
+
+15988184546 
+puwell119
+
+^(?=.*a)(?=.*b).*$  包含a且包含b的一行
+
+	cdx_sem_t sem_gdc;
+	sGdcParam gdc_param;
+	int zoomH;
+	int zoomV;
+
+    // pthread_mutex_lock(&pContext->m_switchMutex);
+	// if (pContext->gdc_param.bGDC_en)
+	// {
+	// 	cdx_sem_wait(&pContext->sem_gdc);
+	// 	// ZRT_LOG_INFO("sem back\n");
+	// }
+	// if (2 == pContext->m_switchStatus)
+	// {
+	// 	if (pContext->gdc_param.bGDC_en && 
+	// 	(pContext->gdc_param.zoomH == pContext->zoomH) && 
+	// 	(pContext->gdc_param.zoomV == pContext->zoomV))
+	// 	{
+	// 		// pContext->m_switchStatus = 0;
+	// 		// AW_MPI_VENC_RequestIDR(0, TRUE);
+	// 	}
+	// 	else
+	// 	{
+	// 		ZRT_LOG_INFO("drop frame\n");
+	// 		// bDrop = true;
+	// 		// AW_MPI_VENC_RequestIDR(0, TRUE);
+	// 	}
+	// }
+	// pthread_mutex_unlock(&pContext->m_switchMutex); 
+
+    // case MPP_EVENT_VENC_GDC_PREOCESS_COMPLETE:
+            // {
+            //     sGdcParam *gdc_param = (sGdcParam *)pEventData;
+			// 	context_t *pContext = (context_t *)cookie;
+
+            //     memcpy(&pContext->gdc_param, gdc_param, sizeof(sGdcParam));
+            //     // ZRT_LOG_INFO("call back\n");
+            //     cdx_sem_up(&pContext->sem_gdc);
+            // }
+    int ZRT_Switch_Enc(context_t *pContext, int target_sensor, GSRECT stNextRoi)
