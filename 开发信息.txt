@@ -4,6 +4,9 @@ onvif rstp
 火警检测 
 升级md5校验
 
+例如，如果要将名为 myfolder 的文件夹打包成 myfolder.tar.gz 文件，可以使用以下命令：
+
+tar -czvf myfolder.tar.gz myfolder
 
 vmhgfs-fuse .host:/ /mnt/hgfs -o subtype=vmhgfs-fuse,allow_other
 tar -zcvf include.tar.gz include/
@@ -832,6 +835,9 @@ cleanmpp
 mkmpp
 成功后再make -j32一般没问题
 
+source ./build/envsetup.sh
+        lunch 5
+
 
 svn revert --recursive .
 
@@ -993,6 +999,7 @@ Camera Compact Module 摄像头模组
 
 只想看已经被修改的文件，你可以使用grep命令过滤输出，像这样：
 svn status | grep '^M'
+svn status | grep '\.c$'
 
 
 Tina_Linux_系统软件_开发指南.pdf
@@ -1062,3 +1069,86 @@ puwell119
             //     cdx_sem_up(&pContext->sem_gdc);
             // }
     int ZRT_Switch_Enc(context_t *pContext, int target_sensor, GSRECT stNextRoi)
+
+
+/mnt/UDISK/language/video_close.g711a
+/mnt/UDISK/language/dingdong.g711a
+/mnt/UDISK/language/ap_mode.g711a
+/mnt/UDISK/language/alarm.g711a
+/mnt/UDISK/language/smoke.g711a
+/mnt/UDISK/language/call.g711a
+/mnt/UDISK/language/motion.g711a
+/mnt/UDISK/language/net_connect.g711a
+/mnt/UDISK/language/upgrade_start.g711a
+/mnt/UDISK/language/dhcp_getip_failed.g711a
+/mnt/UDISK/language/upgrade_success.g711a
+/mnt/UDISK/language/video_open.g711a
+/mnt/UDISK/language/upgrade_fail.g711a
+/mnt/UDISK/language/input_ssid.g711a
+/mnt/UDISK/language/passwd_err.g711a
+/usr/bin/VoiceCN/dhcp_getip_failed.g711a
+/usr/bin/VoiceCN/net_connect.g711a
+/usr/bin/VoiceCN/passwd_err.g711a
+/usr/bin/VoiceCN/upgrade_fail.g711a
+/usr/bin/VoiceCN/upgrade_start.g711a
+/usr/bin/VoiceCN/upgrade_success.g711a
+/usr/bin/VoiceCN/video_close.g711a
+/usr/bin/VoiceCN/video_open.g711a
+/usr/bin/VoiceEN/dhcp_getip_failed.g711a
+/usr/bin/VoiceEN/net_connect.g711a
+/usr/bin/VoiceEN/passwd_err.g711a
+/usr/bin/VoiceEN/upgrade_fail.g711a
+/usr/bin/VoiceEN/upgrade_start.g711a
+/usr/bin/VoiceEN/upgrade_success.g711a
+/usr/bin/VoiceEN/video_close.g711a
+/usr/bin/VoiceEN/video_open.g711a
+/usr/bin/VoiceGeneral/ap_mode.g711a
+/usr/bin/VoiceGeneral/call.g711a
+/usr/bin/VoiceGeneral/dingdong.g711a
+/usr/bin/VoiceGeneral/input_ssid.g711a
+/usr/bin/VoiceGeneral/motion.g711a
+/usr/bin/VoiceGeneral/smoke.g711a
+
+/media/tcp_client 16663 1 /usr/bin/VoiceGeneral/ap_mode.g711a
+/media/tcp_client 16663 1 /usr/bin/VoiceCN/net_connect.g711a
+/media/tcp_client 16663 1 /usr/bin/VoiceCN/dhcp_getip_failed.g711a
+
+159881
+1009873167
+日志搜索device_id camera_id 获取设备id
+
+
+for(i = 0; i < g_stAllFocus.lNum; i++)
+        {
+            ZRT_LOG_DBG("Area = %d, mask x,y = [%f, %f], region = [%d,%d,%d,%d]\n", 
+        g_stAllFocus.pstTarList[i].lArea,
+        g_stAllFocus.pstTarList[i].stCentroidF.x, g_stAllFocus.pstTarList[i].stCentroidF.y,
+        g_stAllFocus.pstTarList[i].stRegion.left, g_stAllFocus.pstTarList[i].stRegion.top, g_stAllFocus.pstTarList[i].stRegion.right, g_stAllFocus.pstTarList[i].stRegion.bottom);
+        }
+
+        ZRT_Motion_OsdUpdate_v2(1, 0, GUN_OSD, (void*)&g_stAllFocus);
+
+
+certutil -hashfile "C:\path\to\your\file" MD5
+
+/config/unitcam.cfg
+
+/extern/v853/lichee/linux-4.9/drivers/media/platform/sunxi-vin/modules/sensor
+
+
+int ShakeCtrl::__Ptz_set_target_degree(int pan_degree, int is_pan_speed_gear, int tilt_degree, int is_tilt_speed_gear)
+{
+    int ret = 0;
+    if(Ptz_motor_is_stop(PTZ_PAN) == 0 || Ptz_motor_is_stop(PTZ_TILT) == 0)
+    {
+        //对可能存在的异常做处理。如果剩余很多负数的(或者圈数寄存器是0)，则可能是芯片寄存器
+		//没更新到，先暂时不处理，等待下次恢复正常在处理
+        if((ret = Ptz_onestep_stop(NULL)) < 0)
+        {
+            printf("[%s:%d]: ptz motor is not update\n", __FUNCTION__, __LINE__);
+            return -1;
+        }
+    }
+    
+    Ptz_motor_set_speed(21);
+    // Ptz_motor_set_speed(m_ShakeCtrlInfo.MotorConfig.lStepFreq);

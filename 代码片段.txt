@@ -1,0 +1,203 @@
+===========================================================================================
+FILE* fd_record=0;
+int record_over=0;
+int frm_count=0;
+
+static int DoWriteFrame1(time_t tm, int frm_type, BYTE *buf, int buf_size)
+{
+	int ret;
+    int blkSize = 0;
+    char *blkData = NULL;
+    tcblk_slots *frmBlk;
+    int offset = 0;  
+
+	FILE_HEAD   file_head = {FRM_FLAG, FILEVER_HEAD, 0x00000100, 0};
+
+	
+	
+	//pHandler->m_fdData = fopen(recName, "ab+");
+	if (fd_record==0&&record_over==0)
+	{
+		char str[30]={0};
+		time_t timestamp = time(NULL);
+    	sprintf(str, "/media/%ld.264", timestamp);
+		
+		// int recfd = open(str, O_CREAT | O_RDWR | O_APPEND | O_CLOEXEC);
+		// if(recfd <= 0){
+		// ZRT_LOG_INFO("open %s failed\n", str);
+		// return FALSE;
+		// }
+		fd_record=fopen(str,"ab+");
+        fwrite( &file_head, sizeof(FILE_HEAD), 1, fd_record);
+
+		ZRT_LOG_ERR("#SD_RECORD# record %s fd = 0x%x\n",str,fd_record);
+	}
+
+	if (fd_record==0)
+	{
+		return 0;
+	}
+	
+	
+
+	//printf("DoWrite size=%d, type=%d\n", buf_size, frm_type);
+
+	//帧头
+	FRAME_INFO  frm_hdr;
+    frm_hdr.frm_type = frm_type;
+    frm_hdr.buf_size = buf_size;
+    frm_hdr.time = tm;
+    ret = fwrite(&frm_hdr, sizeof(frm_hdr), 1, fd_record);
+	if(ret <= 0){
+		ZRT_LOG_ERR("write frame head failed!\n");
+		
+		return 0;
+	}
+	if(FRM_TYPE_I == frm_type){	
+		frm_count++;
+		if (frm_count>20)
+		{
+			ZRT_LOG_ERR("#SD_RECORD# record over\n");
+			record_over=1;
+			fclose(fd_record);
+			fd_record=0;
+			return 0;
+		}
+		
+	}
+	
+	//帧数据
+    frmBlk = (tcblk_slots *)buf;
+    offset = 0;    
+	while(1)
+    {
+        blkSize = tcblk_step_get_blk_data(frmBlk, offset, &blkData);
+        if((0 == blkSize) || (NULL == blkData)){
+            break;
+        }
+
+        ret = fwrite(blkData, blkSize, 1, fd_record);
+		if(ret != 1){
+			ZRT_LOG_ERR("fwrite frame fail, errno = %d\n", errno);
+			return 0;
+		}
+		
+		offset += blkSize;
+    }
+
+	return buf_size;
+}
+===========================================================================================
+
+
+struct record_stu
+{
+	FILE* fd_record;
+	int record_over;
+	int frm_count;
+};
+
+struct record_stu RS[8]={0};
+
+int write_2_media(int frm_type, unsigned char *buf, int buf_size ,int chn)
+{
+	int ret;
+    int blkSize = 0;
+    char *blkData = NULL;
+    int offset = 0;  
+	int record_over=RS[chn].record_over;
+
+	if (RS[chn].fd_record==0&&record_over==0)
+	{
+		char str[30]={0};
+		time_t timestamp = time(NULL);
+    	sprintf(str, "/media/%d_%ld.264", chn, timestamp);
+		RS[chn].fd_record=fopen(str,"wb+");
+		ZRT_LOG_ERR("#SD_RECORD# write_2_media %s fd = 0x%x\n",str,RS[chn].fd_record);
+	}
+
+	if (RS[chn].fd_record==0)
+	{
+		return 0;
+	}
+	
+
+	//printf("DoWrite size=%d, type=%d\n", buf_size, frm_type);
+
+	// if(1 == frm_type){	
+	// 	RS[chn].frm_count++;
+	// 	if (RS[chn].frm_count>20)
+	// 	{
+	// 		ZRT_LOG_ERR("#SD_RECORD# write_2_media over\n");
+	// 		RS[chn].record_over=1;
+	// 		fclose(RS[chn].fd_record);
+	// 		RS[chn].fd_record==0;
+	// 		return 0;
+	// 	}
+		
+	// }
+	
+	if (RS[chn].fd_record!=0)
+    	ret = fwrite(buf, buf_size, 1, RS[chn].fd_record);
+    	// ret = fwrite("buf1", 4, 1, RS[chn].fd_record);
+	
+
+	return 0;
+}
+static int GetFrameType(int playloadType, VENC_DATA_TYPE_U mDataType) { 
+	int frameType;
+	if(1 == playloadType){
+		frameType = (H265E_NALU_ISLICE == mDataType.enH265EType) ? 1 : 0;
+	}
+	else{
+		frameType = (H264E_NALU_ISLICE == mDataType.enH264EType) ? 1 : 0;
+	}
+	return frameType;
+}
+
+static void SendData(int chn, int streamType, VENC_STREAM_S *pVencFrame)
+{
+	if (streamType!=0)
+	{
+		return;
+	}
+	
+	unsigned int frm_len = pVencFrame->mpPack->mLen0 + pVencFrame->mpPack->mLen1;
+	int iFrameType = GetFrameType(camera_allcfg.m_capture.payloadtype, pVencFrame->mpPack->mDataType);
+
+	unsigned char *buf = NULL;
+	int offset = 0;
+	if (iFrameType)
+	{
+		VencHeaderData stSpsPpsInfo;
+		VENC_CHN mVeChn = chn * 4 + streamType;
+		int tmpret = AW_MPI_VENC_GetH264SpsPpsInfo(mVeChn, &stSpsPpsInfo);
+
+		frm_len += stSpsPpsInfo.nLength;
+		buf = (unsigned char *)malloc(frm_len);
+		memcpy((void *)buf, stSpsPpsInfo.pBuffer, stSpsPpsInfo.nLength);
+		offset += stSpsPpsInfo.nLength;
+	}
+	else
+	{
+		buf = (unsigned char *)malloc(frm_len);
+	}
+
+	if ((NULL != pVencFrame->mpPack->mpAddr0) && (0 != pVencFrame->mpPack->mLen0))
+	{
+		memcpy(buf + offset, (char *)pVencFrame->mpPack->mpAddr0, pVencFrame->mpPack->mLen0);
+		offset += pVencFrame->mpPack->mLen0;
+	}
+	if ((NULL != pVencFrame->mpPack->mpAddr1) && (0 != pVencFrame->mpPack->mLen1))
+	{
+		memcpy(buf + offset, (char *)pVencFrame->mpPack->mpAddr1, pVencFrame->mpPack->mLen1);
+	}
+
+	int frm_type = GetNALType(camera_allcfg.m_capture.payloadtype, pVencFrame->mpPack->mDataType);
+	write_2_media(iFrameType,buf, frm_len, chn);
+
+	free(buf);
+
+}
+
+===========================================================================================
