@@ -15,6 +15,9 @@ tar -xzf /bbs.tar.zip -C /zzz/bbs
 unzip pwdecrypt.zip -d ./pwdecrypt/ 
 rm -rf !(keep) #删除keep文件之外的所有文件
 
+解压xxxxx.tar.gz 会将里面的yyyyy文件夹解压在当前目录
+tar -xzf xxxxx.tar.gz 
+
 zip -r html.zip ./html
 
 bash: !: event not found
@@ -1152,3 +1155,24 @@ int ShakeCtrl::__Ptz_set_target_degree(int pan_degree, int is_pan_speed_gear, in
     
     Ptz_motor_set_speed(21);
     // Ptz_motor_set_speed(m_ShakeCtrlInfo.MotorConfig.lStepFreq);
+
+
+echo 96  > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio96/direction
+echo 1 > /sys/class/gpio/gpio96/value
+
+cat /sys/kernel/debug/mpp/isp
+cat /sys/kernel/debug/mpp/ve_*
+
+ffmpeg -f alaw -ar 8000 -ac 1 -i upgrade_start.pcma -vcodec copy test.mp4
+
+检查有没有进产测 搜wlan0 如果有很多信息打印就是进了 还可以搜factory如果很多factory函数打印就是进了
+
+ffplay -f alaw -ac 1 -ar 8000 -i avps.ps
+
+	.AEncattr.AeAttr.sampleRate = 8000,
+	.AEncattr.AeAttr.channels = 1,	
+	.AEncattr.AeAttr.bitRate = 0,
+	.AEncattr.AeAttr.bitsPerSample = 16,
+	.AEncattr.AeAttr.attachAACHeader = 1,
+	.AEncattr.AeAttr.Type = PT_G711A,

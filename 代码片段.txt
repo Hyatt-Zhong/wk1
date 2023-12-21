@@ -201,3 +201,281 @@ static void SendData(int chn, int streamType, VENC_STREAM_S *pVencFrame)
 }
 
 ===========================================================================================
+
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 16663
+struct message
+{
+    int cmd;
+    char param[256];
+};
+
+void handle(char* buf,int len, void* args){
+	ZRT_AudioHandler *audio = (ZRT_AudioHandler *)args;
+	struct message *pmsg=buf;
+
+	switch (pmsg->cmd)
+	{
+	case 1:
+		pthread_mutex_lock(&audio->mutex);
+    	snprintf(audio->sToneFileName, sizeof(audio->sToneFileName), "%s", pmsg->param);
+    	pthread_mutex_unlock(&audio->mutex);
+		break;
+	
+	default:
+		break;
+	}
+
+}
+
+static void* audio_test_thread_func(void* args){
+
+    int server_fd, client_fd;
+    struct sockaddr_in server_addr, client_addr;
+    fd_set readfds;
+    int activity, i, addrlen, errno;
+    int BUFFER_SIZE=512;
+    char *success="success";
+    char buffer[BUFFER_SIZE];
+
+    // 创建套接字
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // 初始化服务器地址
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(SERVER_PORT);
+
+    // 将套接字绑定到服务器地址
+    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // 监听连接
+    if (listen(server_fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server started. Waiting for connections...\n");
+
+    while (1) {
+        // 清空文件描述符集合
+        FD_ZERO(&readfds);
+
+        // 将服务器套接字添加到文件描述符集合
+        FD_SET(server_fd, &readfds);
+
+        // 使用 select 函数监听多个套接字
+        activity = select(10, &readfds, NULL, NULL, NULL);
+
+        if ((activity < 0)) {
+            printf("select error");
+        }
+
+        // 如果有新的连接请求
+        if (FD_ISSET(server_fd, &readfds)) {
+            int addrlen = sizeof(client_addr);
+            if ((client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t*)&addrlen)) < 0) {
+                
+            }
+            else
+            {
+                FD_SET(client_fd, &readfds);
+                printf("New connection, socket fd is %d, ip is : %s, port : %d\n", client_fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+            }
+        }
+
+        if (FD_ISSET(client_fd, &readfds)) {
+                int valread=0;
+                if ((valread = read(client_fd, buffer, BUFFER_SIZE)) == 0) {
+                    getpeername(client_fd, (struct sockaddr*)&client_addr, (socklen_t*)&addrlen);
+                    printf("Host disconnected, ip %s, port %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    close(client_fd);
+                } else {
+                    handle(buffer,valread,args);
+                    send(client_fd, success, strlen(success), 0);
+                }
+            }
+
+    }
+}
+
+
+	// if((iRet = pthread_create(&initTid, NULL, ZRT_Audio_Delay_Init_Task, (void *)handler)))
+	// {
+	// 	ZRT_LOG_ERR("init Thread create fail, iRet=[%d]\n", iRet);
+	// 	goto err_audio_in_init;
+	// }
+	// pthread_detach(initTid);
+
+	pthread_t atestid;
+	pthread_create(&atestid, NULL, audio_test_thread_func, (void *)handler);
+	pthread_detach(atestid);
+
+
+============================================================================================
+
+int Record()
+{
+	static time_t beg = 0;
+	if (beg < 1702879726)
+	{
+		beg = time(NULL);
+		if (beg < 1702879726)
+		{
+			return 0;
+		}
+		
+		ZRT_LOG_INFO("beg %ld\n",beg);
+	}
+
+	time_t now = time(NULL);
+	bool ret = !(now - beg > 30);
+	static int i=0;
+	if (!ret&& i==0)
+	{
+		i++;
+		ZRT_LOG_INFO("end %ld\n",now);
+	}
+	
+	return (int)ret;
+}
+
+static void VWrite(FILE *fp, char *buf, int len, unsigned long long time)
+{
+	if (fp)
+	{
+		// ZRT_LOG_INFO("write v frm\n");
+		fwrite("video_frame", 11, 1, fp);
+		fwrite(&time, 8, 1, fp);
+		fwrite(buf, len, 1, fp);
+	}
+	return 0;
+}
+
+static void WriteVideo(int chn, int streamType, VENC_STREAM_S *pVencFrame)
+{
+	if (streamType != 0)
+	{
+		return;
+	}
+
+	static FILE *fp = 0;
+	char *filename = "/media/VFrames.file";
+
+	if (!Record())
+	{
+		if (fp)
+		{
+			fclose(fp);
+			fp = 0;
+			ZRT_LOG_INFO("close file %s\n", filename);
+		}
+		return;
+	}
+	else
+	{
+		if (!fp)
+		{
+			fp = fopen(filename, "wb+");
+			ZRT_LOG_INFO("open file %s\n", filename);
+		}
+	}
+	// ZRT_LOG_INFO("here ..\n");
+
+	unsigned int frm_len = pVencFrame->mpPack->mLen0 + pVencFrame->mpPack->mLen1;
+	int iFrameType = GetFrameType(camera_allcfg.m_capture.payloadtype, pVencFrame->mpPack->mDataType);
+	
+	// ZRT_LOG_INFO("here ..\n");
+
+	unsigned char *buf = NULL;	
+	int offset = 0;
+	if (iFrameType)
+	{
+		VencHeaderData stSpsPpsInfo;
+		VENC_CHN mVeChn = chn * 4 + streamType;
+		int tmpret = AW_MPI_VENC_GetH264SpsPpsInfo(mVeChn, &stSpsPpsInfo);
+
+		frm_len += stSpsPpsInfo.nLength;
+		buf = (unsigned char *)malloc(frm_len);
+		memcpy((void *)buf, stSpsPpsInfo.pBuffer, stSpsPpsInfo.nLength);
+		offset += stSpsPpsInfo.nLength;
+	}
+	else
+	{
+		buf = (unsigned char *)malloc(frm_len);
+	}
+
+	// ZRT_LOG_INFO("malloc %d\n", frm_len);
+	
+
+	if ((NULL != pVencFrame->mpPack->mpAddr0) && (0 != pVencFrame->mpPack->mLen0))
+	{
+		memcpy(buf + offset, (char *)pVencFrame->mpPack->mpAddr0, pVencFrame->mpPack->mLen0);
+		offset += pVencFrame->mpPack->mLen0;
+	}
+	if ((NULL != pVencFrame->mpPack->mpAddr1) && (0 != pVencFrame->mpPack->mLen1))
+	{
+		memcpy(buf + offset, (char *)pVencFrame->mpPack->mpAddr1, pVencFrame->mpPack->mLen1);
+	}
+
+	// ZRT_LOG_INFO("copy ..\n");
+
+	int frm_type = GetNALType(camera_allcfg.m_capture.payloadtype, pVencFrame->mpPack->mDataType);
+
+	VWrite(fp, buf, frm_len, pVencFrame->mpPack->mPTS);
+	
+
+	free(buf);
+}
+
+if (chn  == 0&& streamType==0)
+{
+	WriteVideo(0,0,pVencFrame);
+}
+
+
+static void AWrite(FILE *fp, char *buf, int len, unsigned long long time)
+{
+	if (fp)
+	{
+		fwrite("audio_frame", 11, 1, fp);
+		fwrite(&time, 8, 1, fp);
+		fwrite(buf, len, 1, fp);
+	}
+	return 0;
+}
+
+static void WriteAudio(char *buf, int len, unsigned long long time)
+{
+	static FILE *fp = 0;
+	char *filename = "/media/AFrames.file";
+
+	if (!Record())
+	{
+		if (fp)
+		{
+			fclose(fp);
+			fp = 0;
+			ZRT_LOG_INFO("close file %s\n", filename);
+		}
+		return;
+	}
+	else
+	{
+		if (!fp)
+		{
+			fp = fopen(filename, "wb+");
+			ZRT_LOG_INFO("open file %s\n", filename);
+		}
+	}
+
+	AWrite(fp, buf, len, time);
+}
+
+		WriteAudio(stream.pStream,stream.mLen,stream.mTimeStamp);
