@@ -1176,3 +1176,17 @@ ffplay -f alaw -ac 1 -ar 8000 -i avps.ps
 	.AEncattr.AeAttr.bitsPerSample = 16,
 	.AEncattr.AeAttr.attachAACHeader = 1,
 	.AEncattr.AeAttr.Type = PT_G711A,
+
+
+
+ffmpeg -f alaw -ar 8000 -ac 1 -i rec.g711a -acodec copy output.mpg
+
+ffmpeg -i mpeg2-pcm-misdetect.mpg -vn -c copy -f vob detach.mpg
+
+/extern/v853/external/eyesee-mpp/middleware/sun8iw21/media/videoIn/videoInputHw.c
+
+/extern/v853/external/eyesee-mpp/middleware/sun8iw21/media/LIBRARY/libisp
+
+/extern/v853/external/eyesee-mpp/middleware/sun8iw21/media/LIBRARY/libisp/isp.c
+
+0x00,0xac,0x2d,0x87,0x54,0x05,0xff,0x01,0xc7,0x00,0x5a,0x50,0x00,0x00,0xb4,0x8c,0x28,0x0f,0x01,0x01

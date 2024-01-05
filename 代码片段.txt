@@ -319,6 +319,17 @@ static void* audio_test_thread_func(void* args){
 
 
 ============================================================================================
+static int GetFrameType(int playloadType, VENC_DATA_TYPE_U mDataType) { 
+	int frameType;
+	if(1 == playloadType){
+		frameType = (H265E_NALU_ISLICE == mDataType.enH265EType) ? 1 : 0;
+	}
+	else{
+		frameType = (H264E_NALU_ISLICE == mDataType.enH264EType) ? 1 : 0;
+	}
+	return frameType;
+}
+
 
 int Record()
 {
@@ -335,7 +346,7 @@ int Record()
 	}
 
 	time_t now = time(NULL);
-	bool ret = !(now - beg > 30);
+	bool ret = !(now - beg > 40);
 	static int i=0;
 	if (!ret&& i==0)
 	{
@@ -346,15 +357,34 @@ int Record()
 	return (int)ret;
 }
 
-static void VWrite(FILE *fp, char *buf, int len, unsigned long long time)
+static void VWrite(FILE *fp, char *buf, int len, unsigned long long time, char isIFrame)
 {
 	if (fp)
 	{
 		// ZRT_LOG_INFO("write v frm\n");
 		fwrite("video_frame", 11, 1, fp);
 		fwrite(&time, 8, 1, fp);
+		fwrite(&isIFrame,1,1,fp);
 		fwrite(buf, len, 1, fp);
 	}
+	// if (!fp)
+	// {
+	// 	return ;
+	// }
+	
+
+	// static FILE* xfp=0;
+	// if (xfp == 0)
+	// {
+	// 	xfp=fopen("/media/264.264","wb+");
+	// 	ZRT_LOG_INFO("open 264.264\n");
+	// }
+	
+	// if (xfp)
+	// {
+	// 	fwrite(buf, len, 1, xfp);
+	// }
+	
 	return 0;
 }
 
@@ -368,6 +398,7 @@ static void WriteVideo(int chn, int streamType, VENC_STREAM_S *pVencFrame)
 	static FILE *fp = 0;
 	char *filename = "/media/VFrames.file";
 
+	int isKey = GetFrameType(camera_allcfg.m_capture.payloadtype, pVencFrame->mpPack->mDataType);
 	if (!Record())
 	{
 		if (fp)
@@ -380,7 +411,7 @@ static void WriteVideo(int chn, int streamType, VENC_STREAM_S *pVencFrame)
 	}
 	else
 	{
-		if (!fp)
+		if (!fp&&isKey)
 		{
 			fp = fopen(filename, "wb+");
 			ZRT_LOG_INFO("open file %s\n", filename);
@@ -405,6 +436,7 @@ static void WriteVideo(int chn, int streamType, VENC_STREAM_S *pVencFrame)
 		buf = (unsigned char *)malloc(frm_len);
 		memcpy((void *)buf, stSpsPpsInfo.pBuffer, stSpsPpsInfo.nLength);
 		offset += stSpsPpsInfo.nLength;
+		ZRT_LOG_INFO("get spspps info %d\n",stSpsPpsInfo.nLength);
 	}
 	else
 	{
@@ -428,8 +460,8 @@ static void WriteVideo(int chn, int streamType, VENC_STREAM_S *pVencFrame)
 
 	int frm_type = GetNALType(camera_allcfg.m_capture.payloadtype, pVencFrame->mpPack->mDataType);
 
-	VWrite(fp, buf, frm_len, pVencFrame->mpPack->mPTS);
-	
+	char ch=iFrameType?'\1':'\0';
+	VWrite(fp, buf, frm_len, pVencFrame->mpPack->mPTS,ch);
 
 	free(buf);
 }
@@ -437,6 +469,35 @@ static void WriteVideo(int chn, int streamType, VENC_STREAM_S *pVencFrame)
 if (chn  == 0&& streamType==0)
 {
 	WriteVideo(0,0,pVencFrame);
+}
+
+
+static void PWrite(char *buf, int len, unsigned long long time)
+{
+	if (!Record()) return;
+	static FILE* fp = 0;
+	if (fp==0)
+	{
+		fp = fopen("/media/PCM.file","wb+");
+	}
+
+	if (fp)
+	{
+		fwrite("audio_frame", 11, 1, fp);
+		fwrite(&time, 8, 1, fp);
+		fwrite(buf, len, 1, fp);
+	}
+
+	static FILE* xfp = 0;
+	if (xfp==0)
+	{
+		xfp = fopen("/media/raw.pcm","wb+");
+	}
+
+	if (xfp)
+	{
+		fwrite(buf, len, 1, xfp);
+	}
 }
 
 
@@ -448,7 +509,19 @@ static void AWrite(FILE *fp, char *buf, int len, unsigned long long time)
 		fwrite(&time, 8, 1, fp);
 		fwrite(buf, len, 1, fp);
 	}
-	return 0;
+
+	static FILE* afp = 0;
+	if (afp==0)
+	{
+		afp = fopen("/media/rec.g711a","wb+");
+	}
+
+	if (afp)
+	{
+		fwrite(buf, len, 1, afp);
+	}
+	
+	
 }
 
 static void WriteAudio(char *buf, int len, unsigned long long time)
@@ -478,4 +551,5 @@ static void WriteAudio(char *buf, int len, unsigned long long time)
 	AWrite(fp, buf, len, time);
 }
 
-		WriteAudio(stream.pStream,stream.mLen,stream.mTimeStamp);
+PWrite(frm.mpAddr,frm.mLen,frm.mTimeStamp);
+WriteAudio(stream.pStream,stream.mLen,stream.mTimeStamp);
