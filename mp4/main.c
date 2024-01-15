@@ -235,6 +235,15 @@ static uint8_t* h264_startcode(uint8_t *data, size_t bytes,int* offset)
 	return NULL;
 }
 
+void print_bin(unsigned char* data,int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        printf("%02x ",data[i]);
+    }
+    printf("\n");
+}
+
 uint8_t* get_data(uint8_t *data, size_t bytes,int *ilen)
 {
     uint8_t *ret = data;
@@ -243,7 +252,7 @@ uint8_t* get_data(uint8_t *data, size_t bytes,int *ilen)
     int offset=0;
     while (next = h264_startcode(ret, len,&offset))
     {
-        len -= next - data;
+        len = bytes - (next - data);
         int type = next[0] & 0x1f;
         // printf("%d \n",type);
         // if(type == 5){printf("----------------offset %d\n",offset);}
@@ -252,11 +261,52 @@ uint8_t* get_data(uint8_t *data, size_t bytes,int *ilen)
     ret -= offset;
     *ilen = bytes-(ret-data);
 
-    char buf[10] = {0};
-    memcpy(buf, ret, 10);
+    // print_bin(data,(ret-data));
     return ret;
 }
 
+void change_nalu(char *pbuf, int size)
+{
+    //把每个nalu的00 00 00 01 替换成该nalu的长度
+    uint8_t *p = pbuf;
+    int offset = 0;
+    uint8_t *next = h264_startcode(p + 4, size - 4, &offset);
+
+    int len = (next ? next - offset - p : size) - 4;
+    pbuf[0] = (uint8_t)((len >> 24) & 0xFF);
+    pbuf[1] = (uint8_t)((len >> 16) & 0xFF);
+    pbuf[2] = (uint8_t)((len >> 8) & 0xFF);
+    pbuf[3] = (uint8_t)((len >> 0) & 0xFF);
+
+    print_bin(pbuf,5);
+}
+
+//把每个nalu的00 00 00 01 替换成该nalu的长度
+void change_filter(uint8_t *data, size_t bytes)
+{
+    uint8_t *p = data;
+    int len = bytes;
+    uint8_t *next = 0;
+    int offset = 0;
+    while (next = h264_startcode(p, len, &offset))
+    {
+        len = bytes - (next - data);
+        p = next;
+
+        char *nalu = next - offset;
+        change_nalu(nalu, len + offset);
+    }
+}
+
+void replace_nalu_header(char *pbuf, int size)
+{
+    //把每帧数据的00 00 00 01 替换成该帧的数据长度
+    int len = size - 4;
+    pbuf[0] = (uint8_t)((len >> 24) & 0xFF);
+    pbuf[1] = (uint8_t)((len >> 16) & 0xFF);
+    pbuf[2] = (uint8_t)((len >> 8) & 0xFF);
+    pbuf[3] = (uint8_t)((len >> 0) & 0xFF);
+}
 
 // #define _FMP4
 #ifdef _FMP4
@@ -264,14 +314,7 @@ uint8_t* get_data(uint8_t *data, size_t bytes,int *ilen)
 #define mov_writer_t fmp4_writer_t
 #endif
 
-void print_bin(unsigned char* data,int len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        printf("%x ",data[i]);
-    }
-    printf("\n");
-}
+
 int create_video_track(mov_writer_t *mov, char* data,int len)
 {
 #ifdef _FMP4
@@ -300,6 +343,16 @@ int create_video_track(mov_writer_t *mov, char* data,int len)
         // v_track = mov_writer_add_video(mov, MOV_OBJECT_H264, 1920, 1080, 0, 0);
     }
     return v_track;
+}
+
+int handle_data(void* data,int size, void *buf,int buflen)
+{
+    int vcl = 0;
+    int update = 0;
+
+    struct mpeg4_avc_t avc;
+    memset(&avc, 0, sizeof(avc));
+    return h264_annexbtomp4(&avc, data, size, buf, buflen, &vcl, &update);
 }
 
 void put_video_audio(mov_writer_t *mov, int audio_track_id,int video_track_id)
@@ -361,34 +414,34 @@ void put_video_audio(mov_writer_t *mov, int audio_track_id,int video_track_id)
         {
             vpts-=s_vpts;
             vpts/=1000;
-            // if(iskey)printf("i frm\n");
-            if(iskey)
+
+            #define COPY_SPSPPS 1
+            #define USE_API 0
+
+            if (!COPY_SPSPPS)
             {
-                int ilen=0;
-                uint8_t* data = get_data(vframe,vsize,&ilen);
-                vframe=data;
-                vsize=ilen;
+                if (iskey)
+                {
+                    int ilen = 0;
+                    uint8_t *data = get_data(vframe, vsize, &ilen);
+                    vframe = data;
+                    vsize = ilen;
+                }
+                else
+                {
+                }
+            }
 
-                int vcl = 0;
-                int update = 0;
-
-                struct mpeg4_avc_t avc;
-                memset(&avc, 0, sizeof(avc));
-                int n = h264_annexbtomp4(&avc, data, vsize, vmp4buf, 500000, &vcl, &update);
-
-                vframe = vmp4buf,vsize = n;
+            if (USE_API)
+            {
+                vsize = handle_data(vframe, vsize, vmp4buf, 500000);
+                vframe = vmp4buf;
             }
             else
             {
-                int vcl = 0;
-                int update = 0;
-
-                struct mpeg4_avc_t avc;
-                memset(&avc, 0, sizeof(avc));
-                int n = h264_annexbtomp4(&avc, vframe, vsize, vmp4buf, 500000, &vcl, &update);
-
-                vframe = vmp4buf,vsize = n;
+                change_filter(vframe,vsize);
             }
+            
             mov_writer_write(mov,video_track_id,vframe,vsize,vpts,vpts,iskey);
             vframe = 0;
         }
