@@ -81,6 +81,9 @@ sudo exportfs -arv
 
 showmount -e
 
+计算字符串"hello"的md5
+echo -n "hello" | md5sum
+
 测试：
 mount -t nfs localhost:/home/mars/nfs_share /mnt
 
@@ -335,6 +338,10 @@ cat >test 创建test文件 ctrl+D退出
 
 svn up -r3 回退到3版本
 svn up 更新到最新版本
+svn 远端根目录新增了一个文件夹，我只想把这个文件夹更新下来，应该怎么做?
+要将远程仓库中新增的特定文件夹更新到本地，您可以使用以下命令：
+
+svn update new_dir
 
 valgrind --tool=memcheck --leak-check=full ./fsck.fat -a check-bad_names.img 检测内存泄漏
 
@@ -701,7 +708,9 @@ gdb调试 coredump
 gdb program coredump
 例如 /media/usr/bin/gdb /media/zrt_app /media/coredump_974_ZRT_MediaDataTh
 usr/bin/gdb -e x_app -c coredump_872_x_app -s x.dbg
-
+调试包含调试信息的程序，不要加-e参数，会导致读不到符号信息
+可以使用以下命令在GDB中传递参数
+run arg1 arg2 ...
 
 wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
 ./wpad wpa_supplicant -Dnl80211 -iwlan0 -c/media/wpa_supplicant.conf -B
@@ -748,6 +757,11 @@ wpa_cli -i wlan0 select_network 0
 wpa_cli -i wlan0 enable_network 0 
 udhcpc -iwlan0
 
+
+占用ip的方法 先用udhcpc动态获取ip，再用ifconfig设置ip
+udhcpc
+#设置ip为192.168.99.120
+ifconfig eth0 192.168.99.120 netmask 255.255.255.0 
 
 /etc/init.d/run.sh
 
@@ -837,14 +851,20 @@ target\allwinner\v851se-perf1/defconfig
 cleanmpp
 mkmpp
 成功后再make -j32一般没问题
+mboot 编译boot0和uboot
+mkernel 编译内核
+mkmpp 编译mpp库
+svn 清理掉多余文件直接make -j32编译，不需要make menuconfig关闭sample选项
 
 source ./build/envsetup.sh
         lunch 5
 
 
 svn revert --recursive .
+#svn 还原当前文件夹，可以在子文件夹使用，将只作用与子文件夹
+svn revert -R . 
 
-svn st | grep '^?' | awk '{print $2}' | xargs rm -rf 清理未跟踪文件
+svn st | grep '^?' | awk '{print $2}' | xargs rm -rf 清理（删除）未跟踪文件
 
 svn info 查看当前版本
 svn status 查看更改的文件
@@ -953,7 +973,8 @@ DESCRIBE rtsp
 /media/DownloadTest http://ush.ipc365.com:8080/httpdownload/download/PUWELL_PA2_Q851SE+8188_16M_V7.02.76_20230707.bin /media/xx.bin
 
 查看目录dir下1层文件或目录所占的空间
-du -h --max-depth=1 /dir |sort -rh
+du -h --max-depth=1 /root |sort -rh
+磁盘占用太大一般是/root/.vscode-server的问题，将它删掉即可,但会丢失插件
 
 查看固件版本
 cat /etc/version.conf
@@ -977,7 +998,9 @@ int main(int argc, char *argv[])
 
 把程序拷贝到 /usr/local/bin/ 目录 可以被命令行调用
 
+#define xprint(fmt, ...) printf(fmt "\n", ##__VA_ARGS__)
 
+-D_USE_MP4 -Dxprint\(fmt\,...\)=printf\(\"\%s:\"\"\#\#mp4\#\#\ \"fmt\"\\n\"\,__func__\,\#\#__VA_ARGS__\)
 
 
 ifconfig eth0 down
@@ -1189,4 +1212,511 @@ ffmpeg -i mpeg2-pcm-misdetect.mpg -vn -c copy -f vob detach.mpg
 
 /extern/v853/external/eyesee-mpp/middleware/sun8iw21/media/LIBRARY/libisp/isp.c
 
+驱动目录
+/extern/v853/lichee/linux-4.9/drivers/media/platform/sunxi-vin/modules/sensor/  
+
 0x00,0xac,0x2d,0x87,0x54,0x05,0xff,0x01,0xc7,0x00,0x5a,0x50,0x00,0x00,0xb4,0x8c,0x28,0x0f,0x01,0x01
+
+二进制查看文件 查看前300个字节
+hexdump -C 21-20-00\(00373202\)_2.mp4 
+
+
+确认是否能将g711封装成MP4
+寻找封装264+g711的库
+将原本的加密过程去掉
+修改原始接口，传入pts
+不止要封装264数据还要将sei sps pps封装进去
+修改接口，适应设备的块内存方式
+封装时需要修改nalu头为nalu的数据长度
+
+
+video_common.c ZRT_Set_IspConfigBin 看效果文件配置
+
+ffmpeg打印 Stream # dump_stream_format 分辨率 avcodec_string
+
+要加快程序的写入速度，可以考虑以下几点：
+
+使用缓冲区：将要写入的数据先存储在内存中的缓冲区中，然后一次性批量写入磁盘，而不是逐个数据写入。这样可以减少磁盘 I/O 操作，提高写入速度。
+
+使用异步写入：在需要写入大量数据时，可以考虑使用异步写入方式，即在数据写入的同时，程序可以继续执行其他操作，不必等待写入完成。这样可以提高程序的整体效率。
+
+优化文件格式：选择更适合写入速度的文件格式，比如使用二进制文件格式而不是文本文件格式，可以减少数据转换和处理的时间。
+
+使用更快的存储设备：如果可能的话，将数据存储在更快速的存储设备上，比如固态硬盘（SSD）而不是传统的机械硬盘，可以显著提高写入速度。
+
+考虑使用内存映射文件：对于需要频繁读写的大型文件，可以考虑使用内存映射文件，这样可以直接在内存中对文件进行操作，避免了频繁的磁盘 I/O 操作。
+
+
+fopen有r、w、a等打开模式，t、b两个文件模式(文本或二进制)
+
+用w、wb、w+b打开，无论如何都会清空原来文件中的数据，很麻烦，如果要多次读取修改文件，清空不是很理想的解决方案，
+a、ab、a+b不会破坏原来数据，但只能添加到原来文件数据的后面，fseek基本失效，这样就修改不了原来的数据了，
+r虽然不会破坏，但是修改不了，这个时候如果用r+b、r+就可以在保留文件原来内容的情况下设置文件指针后修改指定位置的内容了
+
+
+\assets\usr\bin\isp\f37p
+
+assets/usr/bin/isp
+
+删除当前目录小于1 byte的文件
+find . -type f -size -1c -maxdepth 1 -exec rm {} \;
+
+
+将一个数以网络字节序放在内存
+static uint8_t *make_len(uint8_t *pbuf, int val)
+{
+    pbuf[0] = (uint8_t)((val >> 24) & 0xFF);
+    pbuf[1] = (uint8_t)((val >> 16) & 0xFF);
+    pbuf[2] = (uint8_t)((val >> 8) & 0xFF);
+    pbuf[3] = (uint8_t)((val >> 0) & 0xFF);
+    return pbuf;
+}
+将网络字节序数读出来
+uint32_t bytesToUInt32(char *byte, int len) {
+    if (len != 4)
+    {
+        return 0;
+    }
+    
+    return (byte[0] << 24) | (byte[1] << 16) | (byte[2] << 8) | byte[3];
+}
+
+uint32 x=0x12345678;
+fwrite((char*)&x,4,1,fp);//将一个数以主机字节序写入文件
+fwrite((char*)make_len(&x,4),4,1,fp);//将一个数以网络字节序写入文件
+
+网络字节序就是一个值在代码里看起来是0x12345678 那么写入文件也是12345678，而主机字节序写入后则是78563412
+
+source ./build/envsetup.sh
+lunch
+2+2 lunch v853s_perf1-tina 7
+make menuconfig
+
+尝试封装264+g711 ps
+尝试封装264+g711 MP4
+去除加密
+为了时间戳统一重新打包音频
+写入MP4时修改头00000001为nalu长度
+通过sps计算分辨率
+根据底层编码给的时间戳计算并重打时间戳
+修改MP4库，将moov头提到前面
+定时更新moov头减小断电重启造成的数据损失
+使用缓存，减小io次数，优化磁盘io
+修改创建200kb空文件的创建时机
+修改MP4库，实现断电续写
+修改seek机制
+修改回放录像逻辑
+修改分辨率更新
+
+#include <iostream>
+using namespace std;
+
+#define MOV_TAG(a, b, c, d) (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
+#define MOV_VIDEO	MOV_TAG('v', 'i', 'd', 'e') // ISO/IEC 14496-12:2015(E) 12.1 Video media (p169)
+#define MOV_AUDIO	MOV_TAG('s', 'o', 'u', 'n')
+
+int main()
+{
+	unsigned int a = MOV_AUDIO;
+	unsigned int v = MOV_VIDEO;
+	
+	cout<<a<<" "<<v<<endl;
+   return 0;
+}
+
+
+nginx-1.17.9使用增加了stream 模块用于一般的TCP 代理和负载均衡，ngx_stream_core_module 这个模块在1.90版本后将被启用。但是并不会默认安装，
+    需要在编译时通过指定 --with-stream 参数来激活这个模块。
+      
+    1）配置Nginx编译文件参数
+
+./configure --with-stream
+
+    2）编译、安装，make && make install
+
+make & make install
+ 
+    3）配置nginx.conf文件
+
+    stream {
+     upstream kevin {
+     server 192.168.10.10:8080; #这里配置成要访问的地址
+     server 192.168.10.20:8081;
+     server 192.168.10.30:8081; #需要代理的端口，在这里我代理一一个kevin模块的接口8081
+     }
+     server {
+     listen 8081; #需要监听的端口
+     proxy_timeout 20s;
+     proxy_pass kevin;
+     }
+    }
+
+      
+    创建最高级别的stream（与http同一级别），定义一个upstream组 名称为kevin，由多个服务组成达到负载均衡 定义一个服务用来监听TCP连接（如：8081端口），
+    并且把他们代理到一个upstream组的kevin中，配置负载均衡的方法和参数为每个server；配置些如：连接数、权重等等。
+      
+    首先创建一个server组，用来作为TCP负载均衡组。定义一个upstream块在stream上下文中，在这个块里面添加由server命令定义的server，指定他的IP地址和
+    主机名（能够被解析成多地址的主机名)和端口号。下面的例子是建立一个被称之为kevin组，两个监听1395端口的server ，一个监听8080端口的server。
+      
+    upstream kevin {
+     server 192.168.10.10:8080; #这里配置成要访问的地址
+     server 192.168.10.20:8081;
+     server 192.168.10.30:8081; #需要代理的端口，在这里我代理一一个kevin模块的接口8081
+     }
+      
+      
+    需要特别注意的是：
+    你不能为每个server定义协议，因为这个stream命令建立TCP作为整个 server的协议了。
+      
+    配置反向代理使Nginx能够把TCP请求从一个客户端转发到负载均衡组中(如：kevin组)。在每个server配置块中 通过每个虚拟server的server的配置信息和在
+    每个server中定义的监听端口（客户端需求的代理端口号，如我推流的的是kevin协议，则端口号为：8081）的配置信息和proxy_passs 命令把TCP通信发送到
+    upstream的哪个server中去。下面我们将TCP通信发送到kevin 组中去。
+      
+     server {
+     listen 8081; #需要监听的端口
+     proxy_timeout 20s;
+     proxy_pass kevin;
+     }
+      
+    当然我们也可以采用单一的代理方式：
+      
+    server {
+     listen 8081; #需要监听的端口
+     proxy_timeout 20s;
+     proxy_pass 192.168.10.30:8081; #需要代理的端口，在这里我代理一一个kevin模块的接口8081
+    }
+    ------------------------------------------------------------------
+      
+    4）改变负载均衡的方法：
+    默认nginx是通过轮询算法来进行负载均衡的通信的。引导这个请求循环的到配置在upstream组中server端口上去。 因为他是默认的方法，这里没有轮询命令，
+    只是简单的创建一个upstream配置组在这儿stream山下文中，而且在其中添加server。
+
+
+    a）least-connected ：对于每个请求，nginx plus选择当前连接数最少的server来处理:
+
+    upstream kevin {
+     least_conn;
+     server 192.168.10.10:8080; #这里配置成要访问的地址
+     server 192.168.10.20:8081;
+     server 192.168.10.30:8081; #需要代理的端口，在这里我代理一一个kevin模块的接口8081
+    }
+    
+
+    b）ip_hash ：客户机的IP地址用作散列键，用于确定应该为客户机的请求选择服务器组中的哪个服务器
+
+    upstream myapp1 {
+        ip_hash;
+        server srv1.example.com;
+        server srv2.example.com;
+        server srv3.example.com;
+    }
+    注：这个least time均衡方法没有
+    c）普通的hash算法：nginx plus选择这个server是通过user_defined 关键字，就是IP地址：$remote_addr;
+
+    upstream kevin {
+     hash $remote_addr consistent;
+     server 192.168.10.10:8080 weight=5; #这里配置成要访问的地址
+     server 192.168.10.20:8081 max_fails=2 fail_timeout=30s;
+     server 192.168.10.30:8081 max_conns=3; #需要代理的端口，在这里我代理一一个kevin模块的接口8081
+    }
+
+
+两张图片，两张图里都是同一个字，但是两张图的尺寸不同，在计算机科学中如何验证两张图里的字是同一个?
+
+在计算机科学中，验证两张图像中的字是否相同通常涉及以下步骤：
+
+图像预处理：首先，需要对两张图像进行预处理，确保它们具有相同的尺寸、颜色空间和对比度。这可以通过调整大小、灰度化和标准化颜色等方法来实现。
+
+特征提取：接下来，从每个图像中提取特征，以便进行比较。一种常见的方法是使用特征描述符（如SIFT、SURF或ORB）来识别图像中的关键点和描述符。这些描述符可以捕获图像的局部特征。
+
+特征匹配：通过比较两幅图像中提取的特征，可以进行特征匹配。这可以通过使用诸如最近邻居（Nearest Neighbors）匹配或一致性检查等算法来实现。
+
+相似度度量：一旦完成特征匹配，可以计算两幅图像之间的相似度分数。这可以通过计算匹配特征点之间的距离或使用一些相似性度量（如结构相似性指数）来实现。
+
+阈值设定：最后，可以根据相似度分数设置一个阈值，以确定两幅图像中的字是否相同。如果相似度分数超过阈值，则可以确定这两个字是相同的。
+
+这些步骤构成了一种基本的图像相似度比较流程，可以用来验证两张图像中的字是否相同。然而，需要注意的是，这些方法可能受到图像尺寸差异、旋转、扭曲等因素的影响，因此在实际应用中需要考虑这些因素。
+
+
+device/config/chips/v853s/configs/perf1/linux/env-4.9.cfg SWITCH=2
+root@mars-virtual-machine:/extern/v853/device/config/chips/v853s/configs/perf1/linux# svn st
+M       env-4.9.cfg
+M       env-8188.cfg
+M       env-EC800E.cfg
+
+
+        self.conv1 = torch.nn.Sequential(
+            torch.nn.Conv2d(1, 10, kernel_size=5),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(kernel_size=2),
+        )
+        self.conv2 = torch.nn.Sequential(
+            torch.nn.Conv2d(10, 20, kernel_size=5),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(kernel_size=2),
+        )
+        self.fc = torch.nn.Sequential(
+            torch.nn.Linear(320, 50),
+            torch.nn.Linear(50, 10),
+        )
+
+linear:
+Linear(in_features=4, out_features=3, bias=True)
+weight:
+Parameter containing:
+tensor([[ 0.1580,  0.1197,  0.0419, -0.1967],
+        [ 0.3840, -0.4597,  0.2347, -0.3428],
+        [-0.3149,  0.2016,  0.2841,  0.4568]], requires_grad=True)
+
+除了使用反向传播算法来找到过滤矩阵（如在卷积神经网络中的过滤器或权重）的方法外，还有其他几种可以探索的方法。以下是一些备选方法：
+
+进化算法：这类算法通过模拟自然选择的过程来优化问题的解。在神经网络中，可以用进化算法来优化网络结构和权重，包括过滤矩阵。这种方法不需要反向传播，而是通过随机变异和选择最佳表现的个体来进化出最优解。
+
+遗传算法：作为进化算法的一种，遗传算法使用交叉和变异操作来生成新的候选解，并用一个适应性函数来评价每个解的质量。这可以用于直接优化网络的权重，包括过滤矩阵。
+
+模拟退火：这是一种概率型优化算法，灵感来源于物理中的退火过程。通过逐渐降低系统温度，模拟退火帮助找到全局最优解，减少陷入局部最优的可能。这种方法可以用于优化神经网络的权重。
+
+粒子群优化（PSO）：这种方法通过模拟鸟群或鱼群的社会行为来优化问题。每个粒子代表一个解，通过跟踪个体和群体的最佳解来更新自己的位置和速度。这种方法同样适用于优化网络权重。
+
+梯度自由优化：在某些情况下，可能需要在没有梯度信息的情况下优化权重，尤其是当损失函数不可导时。例如，使用Nelder-Mead单纯形方法等。
+
+贝叶斯优化：这是一种基于概率模型的全局优化策略，常用于优化计算成本高昂的问题。通过建立目标函数的概率模型，贝叶斯优化可以有效地找到最优解。
+
+强化学习：尽管通常用于不同的应用场景，但理论上可以通过设计一种环境和奖励机制，使用强化学习来优化神经网络的权重。
+########################################
+
+判断两个数据是否相似，可以使用上述提到的几种方法中的某些方法，尤其是那些用于特征提取和数据降维的方法。以下是几种适用于相似性判断的方法：
+
+主成分分析（PCA）： 通过PCA，可以将两个数据集转换到相同的低维空间中，然后比较它们在这个空间中的距离或相似性。如果两个数据集在PCA变换后的主成分得分（或者说，低维表示）接近，那么可以认为它们在某种程度上是相似的。
+
+自动编码器（Autoencoder）： 自动编码器同样可以用于提取数据的低维特征表示。如果两个数据点通过同一个训练好的自动编码器得到的编码（低维表示）相似，那么这两个数据点也可以被认为是相似的。这种方法在处理非线性数据关系时尤为有效。
+
+奇异值分解（SVD）： 通过SVD也能得到数据的低维表示。通过比较两个数据矩阵的奇异值分解结果，可以估计它们的相似性。相似的数据将在奇异值和对应的奇异向量上表现出相似性。
+########################################
+
+概念和概念之间通过一个隐藏层连接，隐藏层需要建立一个索引系统，对于不同的语境，触发不同的隐藏节点
+
+首先先建立语境，语境就是第一直觉，可以是对一系列的输入进行一个md5的过程，有了第一直觉，再通过第一直觉将信息进行分类识别
+
+有一种神经网络模型叫做混合专家模型（Mixture of Experts），它可以根据输入的特征选择不同的隐藏层结构。具体来说，混合专家模型由多个专家网络组成，每个专家网络可以有不同的架构和参数。此外，还有一个称为门控网络（Gating Network）的部分，它根据输入特征来决定每个专家网络的权重，也就是说，它会根据输入的特征来选择最合适的专家网络或组合。
+
+import torch
+
+# 创建一个示例二维张量
+tensor = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+# 沿维度0计算均值
+mean_dim0 = torch.mean(tensor, dim=0)
+print("Mean along dimension 0:", mean_dim0)
+
+# 沿维度1计算均值
+mean_dim1 = torch.mean(tensor, dim=1)
+print("Mean along dimension 1:", mean_dim1)
+
+# 沿维度0计算中位数
+median_dim0 = torch.median(tensor, dim=0).values
+print("Median along dimension 0:", median_dim0)
+
+# 沿维度1计算中位数
+median_dim1 = torch.median(tensor, dim=1).values
+print("Median along dimension 1:", median_dim1)
+
+PhoenixCard.exe
+
+环境参数更新需要用量产卡刷才能更新
+
+-Dxprint\(...\)#
+
+重启标志
+]:application(V
+
+
+40:6A:8E:FF:38:0F
+6d428d1d72f3c9c0b79b118105616dcc
+
+fw_setenv mac 40:6A:8E:FF:38:0F
+fw_setenv mac_sign 6d428d1d72f3c9c0b79b118105616dcc
+
+开机脚本
+/home/mars/workspace/code/qzsdk/branch/threelens_switch/pack_threelens_switch/assets/etc/init.d/run_16M.sh
+
+如果你想在 D:\Documents 目录下搜索，你应该这样输入：
+
+"D:\Documents"
+
+如果你想进一步搜索该目录下的特定文件或文件夹，可以在路径后添加搜索关键词。例如，搜索所有的 PDF 文件，可以这样输入：
+"D:\Documents" *.pdf
+
+或者，如果你想在该目录下只搜索文件夹，可以结合之前的 folder: 语法：
+
+"D:\Documents" folder:
+
+写驱动寄存器
+cd /sys/devices/f37p_mipi #进入f37p_mipi驱动目录
+echo 1 > read_flag #1读 0写
+echo 00220000 > cci_client #地址0x22
+cat read_value #获取值
+
+echo 0 > read_flag #1读 0写
+echo 00120030 > cci_client #往地址0x22写入0x30
+cat read_value
+
+cd /sys/devices/f37p_dvp;echo 0 > read_flag;echo 000c0001 > cci_client #walking1测试模式
+
+if (!run_flag[i])
+		{
+			new_degree[i] = curr_degree[i];
+		}
+		else
+		{
+			new_degree[i] = curr_degree[i] + diff_curdegree*0.9;//并不直接转向目标点，只往那个方向转一部分，消除震荡
+		}
+
+
+型号 普维方案定义表
+
+svn checkout https://192.168.10.195:448/svn/Qz-IPC/trunk/tina-v853 ./tina-v853
+
+/tina-v853/external/eyesee-mpp/middleware/sun8iw21/media/LIBRARY  编码库目录
+
+v851se_vc2 ## v851se 2+1 
+v851s3_vc  ## v851s3 2+1 全时变焦2+1
+
+[2024/5/23 13:36:13] /usr/bin/check_stream.sh
+[2024/5/23 13:36:13] =======check video node =========
+[2024/5/23 13:36:13] video0   video10  video13  video2   video5   video8
+[2024/5/23 13:36:13] video1   video12  video14  video4   video6   video9
+[2024/5/23 13:36:13] =======check sensor mipi clk=========
+[2024/5/23 13:36:13] mipi0 sensor clk : OK, clk_mode: Continuous Mode
+[2024/5/23 13:36:13] cannot connect to the server
+[2024/5/23 13:36:13] mipi1 sensor clk : OK, clk_mode: Continuous Mode
+[2024/5/23 13:36:13] =======check mipi d0 trnds=========
+[2024/5/23 13:36:13] mipi0-d0 trnds: ok (not TRNDS)
+[2024/5/23 13:36:13] mipi0-d1 trnds: ok (not TRNDS)
+[2024/5/23 13:36:13] mipi1-d0 trnds: ok (not TRNDS)
+[2024/5/23 13:36:13] mipi0-d1 trnds: ok (not TRNDS)
+[2024/5/23 13:36:13] =======check mipi int erro=========
+[2024/5/23 13:36:13] mipi0:
+[2024/5/23 13:36:13] not erro
+[2024/5/23 13:36:13] mipi1:
+[2024/5/23 13:36:13] not erro
+[2024/5/23 13:36:13] =======check dvp polarity=========
+[2024/5/23 13:36:13] DVP_CLK_POL: active in falling edge
+[2024/5/23 13:36:13] DVP_HERF_POL: positive
+[2024/5/23 13:36:13] DVP_VREF_POL: negative
+[2024/5/23 13:36:13] =======check dvp pclk cnt=========
+[2024/5/23 13:36:13] DVP PCLK CNT: OK
+[2024/5/23 13:36:13] =======check sensor mipi width & height=========
+[2024/5/23 13:36:13] mipi0=> width:1920 , height:1080
+[2024/5/23 13:36:13] mipi1=> width:1920 , height:1080
+[2024/5/23 13:36:13] dvp=> width:1920 , height:1080
+[2024/5/23 13:36:13] =======check csi mclk=========
+[2024/5/23 13:36:13] csi0_mclk : NO
+[2024/5/23 13:36:13] csi0_mclk_fre: 24000000
+[2024/5/23 13:36:13] csi1_mclk : NO
+[2024/5/23 13:36:13] csi1_mclk_fre: 24000000
+[2024/5/23 13:36:13] csi2_mclk : NO
+[2024/5/23 13:36:13] csi2_mclk_fre: 24000000
+[2024/5/23 13:36:13] =======show vi pipe line =========
+[2024/5/23 13:36:13] f37p_mipi => mipi0 => csi0 => tdm_rx0 => isp0 => vipp0
+[2024/5/23 13:36:13] f37p_mipi_2 => mipi1 => csi1 => tdm_rx1 => isp1 => vipp1
+[2024/5/23 13:36:13] f37p_dvp => csi2 => tdm_rx2 => isp2 => vipp2
+[2024/5/23 13:36:13] =======check vi ch stream =========
+[2024/5/23 13:36:15] vi stream is ok
+[2024/5/23 13:36:15] =======check sensor i2c sda status=========
+[2024/5/23 13:36:15] f37p_mipi i2c-0 SDA_STATUS: High, ok
+[2024/5/23 13:36:15] f37p_mipi_2 i2c-1 SDA_STATUS: High, ok
+[2024/5/23 13:36:15] f37p_dvp i2c-4 SDA_STATUS: High, ok
+[2024/5/23 13:36:15] ==========END============
+
+
+./i2cdetect -l        //用i2cdetect检测有几组i2c总线在系统上
+./i2cdetect -r -y 1    //用i2cdetect检测挂载在i2c1总线上器件 
+./i2cdump -f -y 1 0x49      //用i2cdump查看器件所有寄存器的值
+用i2cset设置单个寄存器值，用i2cget读取单个寄存器值，可以在初期调试时发挥很大作用，一旦有预期的现象出现，就可以用i2cdump读出整个寄存器的值，然后固化到代码中。
+./i2cset -f -y 1 0x20 0x77 0x3f （设置i2c-1上0x20器件的0x77寄存器值为0x3f）
+./i2cget -f -y 1 0x20 0x77     （读取i2c-1上0x20器件的0x77寄存器值）
+
+写一个shell脚本，用i2cset 将总线n上的m器件的u组数据写入寄存器，u组数据中包括地址v1 v2 ... vu，值w1 w2 ... wu
+用python opencv写一个程序，主线程是一个固定窗口，还有一个子线程，窗口是一个绘制图片的窗口，窗口的生命周期就是程序的生命周期，线程从一个队列里读取数据，数据是一张图片，只要读到数据就重绘窗口内容，即清空窗口然后在窗口中绘制读到的图片
+
+./set.sh 4 0x44 data.txt 
+./set.sh 4 0x44 init_data.txt 
+./get.sh 4 0x44 data.txt 
+
+t5 ng rewrite reg
+t6 ng log
+t7 log 
+t8 ng  log rewrite reg
+t9 =t6
+t10 =t8
+
+
+t12 ng rewrite reg
+t13 ng 没有rewrite reg
+
+t15 没有ng 有日志打印 没有rewrite reg
+t16 ng 有日志打印 没有rewrite reg
+
+t18 ng + daemon_app 日志
+t19 no ng + daemon_app 日志
+t20 =t18
+t21 =t19
+
+t22 ng + daemon_app 日志 额外写
+
+t23 ng + 记录uboot
+
+t6 nodog + ng+ daemon_app 日志
+t7 nodog + no ng+ daemon_app 日志
+t9 nodog + ng 4路dma搬运 + daemon_app 日志
+
+M       device/config/chips/v853s/configs/perf2/board.dts
+M       device/config/chips/v853s/configs/perf2/linux/config-4.9
+M       lichee/linux-4.9/drivers/media/platform/sunxi-vin/modules/sensor/f37p_dvp_gun.c
+
+
+13606800301
+Lixun1973
+
+rm -rf /media/2024* /media/coredum* /media/1970* /media/*.alaw /media/*_*.mp4
+
+mount --bind /media/extsd /mnt/extsd
+cp -r /tmp/nfs_share/extsd/ /media/extsd/
+/mnt/extsd/demo_rtsp -path /mnt/extsd/venc_0.conf &
+
+/media/op_reg.sh
+/media/rw_cfg.sh
+
+killall demo_rtsp
+
+
+删除size为0的(乱码)文件
+find . -type f -size 0 -exec rm -f {} \;
+
+echo -e "\033[0m"
+
+用fuse挂载 
+/usr/bin/allwin_fuse /media/ 
+卸载
+umount /media
+
+mkfs.vfat -F 32 /dev/mmcblk0 #给存储设备mmcblk0制作FAT32文件系统
+mount /dev/mmcblk0 /media  #把设备mmcblk0挂载到 /media
+
+umount /media
+mount /dev/mmcblk0 /media
+mount /dev/mmcblk0 /mnt/extsd
+
+umount /media;mount /dev/mmcblk0 /media;mount /dev/mmcblk0 /mnt/extsd;rm /mnt/extsd/*.raw;cp /media/gbl_rootfs.bint8 /media/gbl_rootfs.bin;/mnt/extsd/start.sh 
+
+setenv SWITCH 2
+saveenv 
+
+svn commit -m "Your commit message here"
+
+mac_sign=8357b50e384a6612afb4cb7dae2c6f0b
+mac=40:6A:8E:FF:37:F1
+
+fw_setenv mac 40:6A:8E:FF:37:F1
+fw_setenv mac_sign 8357b50e384a6612afb4cb7dae2c6f0b

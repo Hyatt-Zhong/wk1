@@ -553,3 +553,189 @@ static void WriteAudio(char *buf, int len, unsigned long long time)
 
 PWrite(frm.mpAddr,frm.mLen,frm.mTimeStamp);
 WriteAudio(stream.pStream,stream.mLen,stream.mTimeStamp);
+
+
+1. 展开：torch.flatten()
+torch.flatten(input, start_dim=0, end_dim=-1)：将输入张量在指定的维度范围内展平。
+示例:
+
+import torch
+
+x = torch.tensor([[1, 2], [3, 4]])
+y = torch.flatten(x)
+print(y)  # 输出: tensor([1, 2, 3, 4])
+
+2. 升维：torch.unsqueeze()
+torch.unsqueeze(input, dim)：在指定位置增加一个维度。
+示例:
+
+x = torch.tensor([1, 2, 3, 4])
+y = torch.unsqueeze(x, 0)  # 在第0维增加
+print(y)  # 输出: tensor([[1, 2, 3, 4]])
+
+3. 降维：torch.squeeze()
+torch.squeeze(input, dim=None)：去除输入张量中所有大小为1的维度。如果指定了维度，那么该维度大小必须为1，才可以被去除。
+示例:
+
+x = torch.tensor([[[1, 2, 3, 4]]])
+y = torch.squeeze(x)  # 去掉大小为1的维度
+print(y)  # 输出: tensor([1, 2, 3, 4])
+
+4. 调整张量形状：torch.reshape()
+torch.reshape(input, shape)：改变输入张量的形状。
+示例:
+
+x = torch.arange(8)  # tensor([0, 1, 2, 3, 4, 5, 6, 7])
+y = torch.reshape(x, (2, 4))
+print(y)
+# 输出:
+# tensor([[0, 1, 2, 3],
+#         [4, 5, 6, 7]])
+
+5. 转置：torch.transpose()
+torch.transpose(input, dim0, dim1)：将输入张量的两个维度进行互换。
+示例:
+
+x = torch.tensor([[1, 2], [3, 4]])
+y = torch.transpose(x, 0, 1)
+print(y)  # 输出: tensor([[1, 3], [2, 4]])
+
+6. 排列维度：torch.permute()
+torch.permute(input, dims)：更一般地重新排列张量的维度。
+示例:
+
+x = torch.randn(2, 3, 5)
+y = x.permute(2, 0, 1)
+print(y.shape)  # 输出: torch.Size([5, 2, 3])
+
+######################################################################################
+在PyTorch中，你可以根据需要在训练过程中动态地修改模型的结构。这包括在运行时添加额外的层。这种灵活性是PyTorch动态图特性的一个重要优势。
+
+下面是一个示例，展示了如何在训练过程中根据模型当前的损失动态地向模型中添加一个全连接层。在这个例子中，如果某个epoch的损失没有显著下降，则增加一个新的全连接层以尝试改进模型性能。
+
+import torch
+from torch import nn, optim
+from torch.autograd import Variable
+
+# 数据集
+x_data = Variable(torch.Tensor([[1.0], [2.0], [3.0], [4.0], [5.0]]))
+y_data = Variable(torch.Tensor([[2.0], [4.0], [6.0], [8.0], [10.0]]))
+
+# 定义模型
+class DynamicLinearRegression(nn.Module):
+    def __init__(self):
+        super(DynamicLinearRegression, self).__init__()
+        self.layers = nn.ModuleList([nn.Linear(1, 1)])
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
+    def add_layer(self):
+        # 当前最后一层的输出特征数即为下一层的输入特征数
+        input_features = self.layers[-1].out_features
+        # 添加一个新的全连接层，输出特征数与输入特征数相同
+        new_layer = nn.Linear(input_features, 1)
+        self.layers.append(new_layer)
+
+# 实例化模型
+model = DynamicLinearRegression()
+
+# 损失函数和优化器
+criterion = nn.MSELoss(reduction='sum')
+optimizer = optim.SGD(model.parameters(), lr=0.01)
+
+# 训练模型
+previous_loss = float('inf')
+for epoch in range(500):
+    # 前向传播
+    y_pred = model(x_data)
+
+    # 计算损失
+    loss = criterion(y_pred, y_data)
+    print(epoch, loss.item())
+
+    # 检查是否需要添加层
+    if loss.item() > previous_loss:
+        print("Adding new layer")
+        model.add_layer()
+        optimizer = optim.SGD(model.parameters(), lr=0.01)  # 重新配置优化器
+
+    previous_loss = loss.item()
+
+    # 反向传播和优化
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+# 测试模型
+x_test = Variable(torch.Tensor([[6.0]]))
+y_test = model(x_test)
+print("预测结果：", y_test.data[0][0].item())
+
+注意事项：
+模型复杂度增加：动态添加层将增加模型的复杂性，这可能导致过拟合，特别是当数据集较小或不够复杂时。
+优化器重置：每次添加新层时，需要重新配置优化器，因为模型参数已经改变。
+性能监控：在实际应用中，监控模型的性能非常重要，以确保添加新层确实带来了性能的提升。
+这种动态修改模型结构的方法提供了极大的灵活性，但也需要仔细设计和测试以确保其有效性和效率。
+
+这样的网络模型能否正确存储和加载
+
+在PyTorch中，动态添加层到你的模型并不会阻止你正常地保存和加载整个模型或模型的状态字典（state dict）。但是，你需要确保在加载模型之后，模型具有与保存时相同的结构。这意味着在加载模型之前，你需要重建模型的结构，包括在训练过程中动态添加的所有层。
+
+保存模型
+保存模型通常有两种方法：直接保存整个模型（包括其结构和参数），或只保存模型参数（推荐的方式）。
+
+保存整个模型：
+torch.save(model, 'model.pth')
+
+保存模型的状态字典：
+torch.save(model.state_dict(), 'model_state_dict.pth')
+
+加载模型
+加载模型时，如果你保存的是整个模型，可以直接加载；如果保存的是状态字典，需要首先重建模型结构。
+
+加载整个模型：
+model = torch.load('model.pth')
+
+加载模型状态字典：
+首先，你需要有一个与保存时相同结构的模型对象，然后加载状态字典：
+
+model = DynamicLinearRegression()
+# 重建模型结构，确保与保存前一致
+# model.add_layer() 根据需要调用
+model.load_state_dict(torch.load('model_state_dict.pth'))
+
+示例：动态重建并加载模型
+如果模型在训练过程中动态地改变了，你需要在加载模型前，恢复其结构到与保存时相同的状态。这通常需要你记录下在训练过程中所做的改变，例如添加了多少层。
+
+假设你已经保存了模型的状态字典，并知道在训练过程中添加了几层，可以按以下方式重建并加载模型：
+
+# 假设我们知道添加了3层
+model = DynamicLinearRegression()
+for _ in range(3):
+    model.add_layer()
+
+model.load_state_dict(torch.load('model_state_dict.pth'))
+
+注意：
+当使用torch.save来保存整个模型时，实际上是保存了模型的序列化数据，这依赖于Python的pickle模块，因此可能会在不同的Python环境或PyTorch版本间遇到兼容性问题。
+推荐使用保存和加载状态字典的方法，因为这种方式更加灵活和稳定，尤其是在涉及到复杂模型结构或跨平台操作时。
+
+
+普及型天文学书籍:
+
+《宇宙简史》作者：史蒂芬·霍金。这本书以浅显易懂的方式介绍了宇宙的起源、结构以及主要天体，非常适合天文学初学者。
+《天文学与宇宙学导论》作者：杰弗里·贝内特等。这本书系统地介绍了天文学的基础知识，包括天体的种类和特性，以及宇宙的大尺度结构。
+专业天文学教材:
+
+《现代天文学导论》作者：迈克尔·泽利克。这本教材详细介绍了天文学的各个分支，包括恒星、行星、星系等天体的详细分类和特征。
+《银河系与星系的结构和动力学》作者：詹姆斯·宾尼。此书深入探讨了银河系及其他星系的结构和动力学，适合对天文学有一定基础的读者。
+天体观测指南:
+
+《观星三百问》作者：汪荣祖。这本书以问答形式介绍了许多关于天文观测的实用信息，包括如何观测银河系中的著名天体。
+《星际旅行者的指南》作者：艾伦·哈斯。这本书提供了详细的指南和地图，帮助读者识别和了解夜空中的星座、星系和其他天体。
+天体物理学相关书籍:
+
+《天体物理学入门》作者：尼尔·德葛拉斯·泰森。这本书介绍了天体物理学的基本概念，帮助读者理解天体的物理性质和演化过程。

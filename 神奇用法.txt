@@ -1,0 +1,7 @@
+makefile 中这样定义xprint：
+	MACRO = -Dxprint\(fmt\,...\)=printf\(fmt\"\\n\"\,\#\#__VA_ARGS__\)
+	
+可在C中使用
+	xprint("hello %d",1);
+
+
