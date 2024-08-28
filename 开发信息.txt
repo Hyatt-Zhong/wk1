@@ -4,6 +4,9 @@ onvif rstp
 火警检测 
 升级md5校验
 
+要确定一个压缩文件的真正格式，即使文件的后缀名是错误的，你可以使用 file 命令来检查文件的魔数（magic number）。
+file 文件名
+
 例如，如果要将名为 myfolder 的文件夹打包成 myfolder.tar.gz 文件，可以使用以下命令：
 
 tar -czvf myfolder.tar.gz myfolder
@@ -19,6 +22,9 @@ rm -rf !(keep) #删除keep文件之外的所有文件
 tar -xzf xxxxx.tar.gz 
 
 zip -r html.zip ./html
+
+假设你有一个 X.tar 文件，你可以使用以下命令将 X.tar 解压到一个名为 X 的文件夹中：
+tar -xf X.tar --one-top-level
 
 bash: !: event not found
 原因：未开启扩展通配符
@@ -539,6 +545,8 @@ curl 192.168.99.224:80/xxfcgi -F "file=@/home/mars/someth/text.t" -H "FILE_NAME:
 
 curl localhost:6565/decrypt/upload/ -X POST -d "title=comewords&content=articleContent" -v
 
+curl -X PUT -T /extern/test/test.c http://192.168.1.197/upload/test-file.cc
+
 underscores_in_headers on;
 
 location /xxfcgi{
@@ -586,7 +594,7 @@ ZRT_WIFI_MODE
 make
 cp zrt_app $nfss -v
 
-
+vscode debug launch.json 
 {
     "configurations": [
         {
@@ -1587,6 +1595,8 @@ v851s3_vc  ## q1 ##v851s3 2+1 全时变焦2+1
 v851s3_vc2  ## q3 ##v851s3 2+1 全时变焦2+1
 v851s3_perf2 ## q2 ##v851s3 1+2
 v851s3_perf1 ## q4 ##v851s3 2+2
+v851se_perf1 ## p1 ##851se 1+2
+主线版本    ##    ##Q851SE 1+1 
 
 [2024/5/23 13:36:13] /usr/bin/check_stream.sh
 [2024/5/23 13:36:13] =======check video node =========
@@ -1642,6 +1652,9 @@ v851s3_perf1 ## q4 ##v851s3 2+2
 用i2cset设置单个寄存器值，用i2cget读取单个寄存器值，可以在初期调试时发挥很大作用，一旦有预期的现象出现，就可以用i2cdump读出整个寄存器的值，然后固化到代码中。
 ./i2cset -f -y 1 0x20 0x77 0x3f （设置i2c-1上0x20器件的0x77寄存器值为0x3f）
 ./i2cget -f -y 1 0x20 0x77     （读取i2c-1上0x20器件的0x77寄存器值）
+
+i2ctransfer -y 0 w1@0x42 0x00 r8 #读取总线0 设备0x42 地址0x00后8个字节
+
 
 写一个shell脚本，用i2cset 将总线n上的m器件的u组数据写入寄存器，u组数据中包括地址v1 v2 ... vu，值w1 w2 ... wu
 用python opencv写一个程序，主线程是一个固定窗口，还有一个子线程，窗口是一个绘制图片的窗口，窗口的生命周期就是程序的生命周期，线程从一个队列里读取数据，数据是一张图片，只要读到数据就重绘窗口内容，即清空窗口然后在窗口中绘制读到的图片
@@ -1763,7 +1776,7 @@ U-Boot的第二阶段：主U-Boot映像被加载到内存中并开始执行。�
 
 引导操作系统：U-Boot根据配置或用户命令加载操作系统内核，并将控制权交给内核，从而启动操作系统。
 
-
+//间隔打印日志
 #define printd(dt,fmt, ...)\
 {\
 	static uint64_t last_tm = 0;\
@@ -1795,3 +1808,1841 @@ void main()
 {
     func();
 }
+===================================================================================================
+
+rtsp是基于tcp还是udp?
+
+RTSP（Real-Time Streaming Protocol）是一种用于控制流媒体服务器的网络协议。它本身并不传输媒体数据，而是用于建立和控制媒体流会话。RTSP可以与多种传输层协议结合使用，包括TCP和UDP。
+
+RTSP控制信令
+RTSP的控制信令通常使用TCP进行传输。这是因为TCP提供了可靠的传输服务，确保控制命令能够准确无误地到达目的地。RTSP控制信令使用TCP的默认端口是554。
+
+媒体流传输
+虽然RTSP本身的控制信令通常使用TCP，但实际的媒体数据（音频和视频流）可以通过以下方式传输：
+
+RTP over UDP: 这是最常见的方式，RTP（Real-time Transport Protocol）用于传输媒体数据，而RTCP（RTP Control Protocol）用于监控传输统计和质量。UDP的低延迟特性使其非常适合实时流媒体传输。
+
+RTP over TCP: 在某些网络环境中（如防火墙阻碍UDP流量的情况下），RTP流可以通过TCP传输。虽然TCP的可靠性可以确保数据包按顺序到达，但其高延迟和重传机制可能会影响流媒体的实时性。
+
+RTP over RTSP (RTSP Interleaved Mode): RTP流可以嵌入在RTSP控制信令的TCP连接中传输，这种方式称为RTSP交错模式（interleaved mode）。这在防火墙和NAT设备阻止独立RTP/UDP流的情况下特别有用。
+
+配置示例
+在使用RTSP时，具体的传输方式通常可以通过RTSP SETUP命令中的传输参数进行配置。例如：
+
+使用RTP over UDP：
+
+SETUP rtsp://example.com/media.mp4 RTSP/1.0
+CSeq: 4
+Transport: RTP/AVP;unicast;client_port=8000-8001
+
+使用RTP over TCP：
+
+SETUP rtsp://example.com/media.mp4 RTSP/1.0
+CSeq: 4
+Transport: RTP/AVP/TCP;unicast;interleaved=0-1
+
+总结
+RTSP控制信令：通常基于TCP传输。
+媒体数据传输：可以使用RTP over UDP、RTP over TCP或RTP over RTSP（交错模式）进行传输。
+这种灵活性使RTSP能够适应各种网络环境和应用需求。
+
+===================================================================================================
+https://cloud.tencent.com/developer/article/2020387
+===================================================================================================
+
+V7.03.27.p4.t4就是最终对离线问题做了优化的
+
+
+/usr/bin/check_stream.sh > /media/stream1.txt
+/usr/bin/check_stream.sh > /media/stream2.txt
+/usr/bin/check_stream.sh > /media/stream3.txt
+/usr/bin/check_stream.sh > /media/stream4.txt
+/usr/bin/check_stream.sh > /media/stream5.txt
+
+触发告警函数
+m_alarmPushCb(eTrackType, enable_push, suppress_alarm);
+
+===================================================================================================
+给出一个键盘驱动程序，并结合这个程序说明一下他们的合作机制
+
+编写一个完整的键盘驱动程序涉及许多复杂的细节。在这里，我将提供一个简化的示例，展示如何编写一个基本的键盘驱动程序，并结合这个程序说明操作系统和驱动程序的合作机制。
+
+示例：一个简化的键盘驱动程序
+以下示例是一个简单的Linux内核模块，它处理键盘输入。请注意，这只是一个非常简化的版本，实际的键盘驱动程序要复杂得多。
+
+驱动程序代码（简化版）
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+
+#define KEYBOARD_IRQ 1
+
+static struct input_dev *keyboard_dev;
+
+irqreturn_t keyboard_interrupt(int irq, void *dev_id) {
+    printk(KERN_INFO "Keyboard interrupt received.\n");
+    // 在这里处理键盘输入，例如读取键码
+    return IRQ_HANDLED;
+}
+
+static int __init keyboard_init(void) {
+    int result;
+
+    // 注册输入设备
+    keyboard_dev = input_allocate_device();
+    if (!keyboard_dev) {
+        printk(KERN_ERR "Unable to allocate input device.\n");
+        return -ENOMEM;
+    }
+
+    keyboard_dev->name = "Simple Keyboard Driver";
+    keyboard_dev->phys = "keyboard/input0";
+    keyboard_dev->id.bustype = BUS_I8042;
+    keyboard_dev->id.vendor = 0x0001;
+    keyboard_dev->id.product = 0x0001;
+    keyboard_dev->id.version = 0x0100;
+
+    // 注册输入设备
+    result = input_register_device(keyboard_dev);
+    if (result) {
+        printk(KERN_ERR "Unable to register input device.\n");
+        input_free_device(keyboard_dev);
+        return result;
+    }
+
+    // 请求中断
+    result = request_irq(KEYBOARD_IRQ, keyboard_interrupt, IRQF_SHARED, "simple_keyboard", (void *)(keyboard_interrupt));
+    if (result) {
+        printk(KERN_ERR "Unable to request IRQ.\n");
+        input_unregister_device(keyboard_dev);
+        return result;
+    }
+
+    printk(KERN_INFO "Simple keyboard driver initialized.\n");
+    return 0;
+}
+
+static void __exit keyboard_exit(void) {
+    free_irq(KEYBOARD_IRQ, (void *)(keyboard_interrupt));
+    input_unregister_device(keyboard_dev);
+    printk(KERN_INFO "Simple keyboard driver exited.\n");
+}
+
+module_init(keyboard_init);
+module_exit(keyboard_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Simple Keyboard Driver");
+
+合作机制说明
+1. 驱动程序的加载和初始化
+当内核模块加载时，module_init(keyboard_init)函数会被调用。在这个函数中，驱动程序执行以下操作：
+
+分配并初始化一个输入设备结构（input_allocate_device）。
+注册输入设备（input_register_device），使操作系统知道这个设备的存在。
+请求获取键盘中断（request_irq），并将中断处理函数（keyboard_interrupt）与键盘中断向量关联起来。
+2. 键盘中断处理
+当键盘生成中断时（例如按下或释放一个键），硬件会向CPU发送一个中断信号。操作系统的中断处理程序会捕获这个中断，并调用注册的中断处理函数keyboard_interrupt。在这个简化的示例中，中断处理函数只是打印了一条日志信息，但在实际的驱动程序中，它会读取键盘控制器的寄存器以确定哪个键被按下或释放，并将这个信息传递给操作系统。
+
+3. 数据传递到用户空间
+在实际的键盘驱动程序中，中断处理函数会将键盘事件（按键和释放事件）传递给输入子系统。输入子系统会将这些事件传递给用户空间的应用程序。例如，当按下一个键时，驱动程序会生成一个输入事件，操作系统会将这个事件传递给正在运行的应用程序（如终端、文本编辑器等）。
+
+4. 驱动程序的卸载
+当内核模块被卸载时，module_exit(keyboard_exit)函数会被调用。在这个函数中，驱动程序执行以下操作：
+
+释放键盘中断（free_irq）。
+注销输入设备（input_unregister_device），使操作系统知道这个设备不再可用。
+总结
+操作系统和键盘驱动程序通过中断和事件机制进行合作。操作系统管理中断向量和输入子系统，而驱动程序处理具体的硬件操作（例如读取键码）。当键盘生成中断时，操作系统会调用驱动程序的中断处理函数，驱动程序处理键盘事件并将其传递给操作系统的输入子系统。最终，输入子系统将这些事件传递给用户空间的应用程序，从而实现键盘输入的处理。
+
+操作系统怎么知道哪个设备对应哪个驱动程序
+
+操作系统如何知道哪个设备对应哪个驱动程序是一个复杂的过程，涉及到硬件和软件之间的多层次交互。以下是操作系统识别和匹配设备与驱动程序的主要机制和步骤：
+
+1. 设备描述和识别
+每个硬件设备都有一些唯一的标识符，用于描述其类型、制造商、型号等信息。这些标识符通常包括：
+
+设备ID：如PCI设备的Vendor ID和Device ID。
+类代码：表示设备类型，如网络设备、存储设备等。
+子系统ID：进一步细分设备的类型和功能。
+2. 总线扫描和设备发现
+操作系统在启动时，会扫描各种总线（如PCI、USB、I2C）以发现连接到系统的所有设备。每种总线都有其特定的扫描机制：
+
+PCI总线：操作系统会读取PCI配置空间，获取每个PCI设备的Vendor ID和Device ID。
+USB总线：操作系统会通过USB协议与每个USB设备通信，获取其设备描述符。
+3. 设备树和设备描述文件
+一些操作系统使用设备树（Device Tree）或设备描述文件（如ACPI表）来描述硬件设备和它们的属性。操作系统会解析这些描述文件，以了解系统中的硬件布局和属性。
+
+4. 驱动程序注册
+驱动程序在加载时会向操作系统注册自己，并提供可以处理的设备类型和标识符。例如，一个PCI网卡驱动程序可能会注册其支持的Vendor ID和Device ID列表。驱动程序的注册通常通过如下方式进行：
+
+PCI驱动程序：通过pci_register_driver函数注册。
+USB驱动程序：通过usb_register函数注册。
+平台驱动程序：通过platform_driver_register函数注册。
+5. 设备与驱动程序匹配
+操作系统使用一个设备驱动模型来管理设备和驱动程序之间的匹配过程。这个模型通常包括以下步骤：
+
+设备发现：操作系统扫描总线，发现设备，并创建设备对象。
+驱动程序注册：驱动程序加载并注册自己，提供可以处理的设备标识符。
+匹配过程：操作系统根据设备标识符和驱动程序注册信息进行匹配。如果发现一个设备的标识符与某个驱动程序的支持列表匹配，操作系统将该驱动程序绑定到设备上。
+6. 设备初始化
+一旦设备和驱动程序匹配成功，操作系统会调用驱动程序的初始化函数，完成设备的初始化。驱动程序会执行以下操作：
+
+配置设备寄存器。
+分配必要的资源（如内存、I/O端口）。
+注册设备节点，使用户空间可以访问该设备。
+示例：PCI设备与驱动程序匹配
+以Linux操作系统中的PCI设备为例：
+
+设备扫描
+操作系统扫描PCI总线，发现一个新的PCI设备，读取其Vendor ID和Device ID。
+
+驱动程序注册
+static const struct pci_device_id my_pci_ids[] = {
+    { PCI_DEVICE(PCI_VENDOR_ID_MYDEVICE, PCI_DEVICE_ID_MYDEVICE) },
+    { 0, }
+};
+
+static struct pci_driver my_pci_driver = {
+    .name = "my_pci_driver",
+    .id_table = my_pci_ids,
+    .probe = my_pci_probe,
+    .remove = my_pci_remove,
+};
+
+pci_register_driver(&my_pci_driver);
+
+匹配过程
+操作系统在发现PCI设备时，会检查所有已经注册的PCI驱动程序。根据设备的Vendor ID和Device ID，找到匹配的驱动程序my_pci_driver。
+
+设备初始化
+操作系统调用my_pci_driver的probe函数，驱动程序在该函数中初始化设备：
+
+static int my_pci_probe(struct pci_dev *dev, const struct pci_device_id *id) {
+    // 初始化设备
+    return 0;
+}
+
+总结
+操作系统通过设备标识符（如Vendor ID和Device ID）、总线扫描、设备树和设备描述文件等机制，发现并识别系统中的硬件设备。驱动程序通过注册自己可以处理的设备类型和标识符，告诉操作系统自己能处理哪些设备。操作系统通过匹配设备标识符和驱动程序注册信息，确定哪个驱动程序处理哪个设备。最终，操作系统调用驱动程序的初始化函数，完成设备的初始化和配置。
+
+前面那个键盘驱动程序里，哪些函数是内核接口？
+
+在前面提供的简化键盘驱动程序示例中，许多函数和接口都是内核提供的接口，用于管理设备、请求中断、分配资源等。以下是这些内核接口的详细解释：
+
+1. input_allocate_device
+keyboard_dev = input_allocate_device();
+
+作用: 分配并初始化一个input_dev结构体，用于表示一个输入设备。
+内核接口: 是的，这是一个内核接口，位于Linux内核输入子系统中。
+2. input_register_device
+result = input_register_device(keyboard_dev);
+
+作用: 注册一个输入设备，使其可被输入子系统识别和使用。
+内核接口: 是的，这是一个内核接口。
+3. input_free_device
+input_free_device(keyboard_dev);
+
+作用: 释放通过input_allocate_device分配的输入设备结构。
+内核接口: 是的，这是一个内核接口。
+4. request_irq
+result = request_irq(KEYBOARD_IRQ, keyboard_interrupt, IRQF_SHARED, "simple_keyboard", (void *)(keyboard_interrupt));
+
+作用: 请求一个中断，并将其与中断处理函数关联起来。
+内核接口: 是的，这是一个内核接口，用于请求硬件中断。
+5. free_irq
+free_irq(KEYBOARD_IRQ, (void *)(keyboard_interrupt));
+
+作用: 释放一个先前请求的中断。
+内核接口: 是的，这是一个内核接口，用于释放硬件中断。
+6. module_init
+module_init(keyboard_init);
+
+作用: 指定模块初始化函数，在模块加载时调用。
+内核接口: 是的，这是一个内核接口，用于模块初始化。
+7. module_exit
+module_exit(keyboard_exit);
+
+作用: 指定模块清理函数，在模块卸载时调用。
+内核接口: 是的，这是一个内核接口，用于模块清理。
+8. printk
+printk(KERN_INFO "Simple keyboard driver initialized.\n");
+
+作用: 向内核日志缓冲区输出信息。
+内核接口: 是的，这是一个内核接口，用于内核日志输出。
+9. MODULE_LICENSE
+MODULE_LICENSE("GPL");
+
+作用: 指定模块的许可证类型。
+内核接口: 是的，这是一个内核宏，用于声明模块的许可证。
+10. MODULE_AUTHOR
+MODULE_AUTHOR("An Example Author");
+
+作用: 指定模块的作者信息。
+内核接口: 是的，这是一个内核宏，用于声明模块的作者。
+11. MODULE_DESCRIPTION
+MODULE_DESCRIPTION("A Simple Keyboard Driver");
+
+作用: 提供模块的描述信息。
+内核接口: 是的，这是一个内核宏，用于声明模块的描述。
+整理后的内核接口函数列表
+input_allocate_device
+input_register_device
+input_free_device
+request_irq
+free_irq
+module_init
+module_exit
+printk
+MODULE_LICENSE
+MODULE_AUTHOR
+MODULE_DESCRIPTION
+这些函数和宏是Linux内核提供的接口，允许驱动程序开发人员与内核和硬件进行交互。它们用于设备管理、中断处理、资源分配和模块管理等方面。
+
+总结
+在简化的键盘驱动程序示例中，多个内核接口函数和宏用于管理输入设备、请求和释放中断、输出内核日志以及模块的初始化和清理。这些内核接口使得驱动程序能够与操作系统的内核层紧密合作，从而实现对硬件设备的管理和控制。
+
+一般来说，键盘发生按键事件后，这个keyboard_interrupt要做什么？
+
+当键盘发生按键事件时，中断处理函数（keyboard_interrupt）需要执行一系列步骤来处理这个事件，确保按键信息能够正确地传递到应用程序。以下是一个典型的键盘中断处理过程中需要执行的主要任务：
+
+1. 确认中断源
+确保中断确实来自键盘设备。这通常通过读取特定的硬件寄存器来完成。
+2. 读取按键扫描码
+键盘控制器会在按键按下或松开时生成一个扫描码（scan code）。中断处理程序需要读取这个扫描码。
+在PC兼容系统中，通常从I/O端口0x60读取扫描码（对于传统的PS/2键盘）。
+3. 处理扫描码
+处理扫描码以确定具体的按键事件。这包括区分按键按下和松开事件，以及处理特殊键（如Shift、Ctrl等）的状态。
+4. 生成输入事件
+将扫描码转换为键码（key code），并生成相应的输入事件。
+这些事件通常包括按键按下（EV_KEY with value 1）和按键释放（EV_KEY with value 0）。
+5. 把输入事件传递给输入子系统
+使用内核输入子系统接口（如input_report_key）将生成的按键事件报告给输入子系统。
+确保事件能够正确地传递到用户空间的应用程序。
+6. 处理键盘LED状态（如Num Lock、Caps Lock等）
+如果按键事件涉及到修改键盘LED状态，中断处理程序需要更新LED状态。
+7. 清除中断请求
+通知硬件中断已被处理，准备接收下一个中断请求。
+示例代码：键盘中断处理函数
+下面是一个更详细和实际的键盘中断处理函数示例代码，它展示了上述步骤的实现：
+
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+#include <linux/io.h>
+
+#define KEYBOARD_IRQ 1
+#define KBD_DATA_REG 0x60
+#define KBD_STATUS_REG 0x64
+
+static struct input_dev *keyboard_dev;
+
+irqreturn_t keyboard_interrupt(int irq, void *dev_id) {
+    unsigned char scancode;
+    int keycode;
+    int keydown;
+
+    // 读取扫描码
+    scancode = inb(KBD_DATA_REG);
+
+    // 处理扫描码，区分按下和释放事件
+    keydown = !(scancode & 0x80);
+    scancode = scancode & 0x7F;
+
+    // 将扫描码转换为键码（这里假设有一个函数get_keycode实现转换）
+    keycode = get_keycode(scancode);
+
+    // 向输入子系统报告按键事件
+    input_report_key(keyboard_dev, keycode, keydown);
+    input_sync(keyboard_dev);
+
+    return IRQ_HANDLED;
+}
+
+static int __init keyboard_init(void) {
+    int result;
+
+    // 注册输入设备
+    keyboard_dev = input_allocate_device();
+    if (!keyboard_dev) {
+        printk(KERN_ERR "Unable to allocate input device.\n");
+        return -ENOMEM;
+    }
+
+    keyboard_dev->name = "Simple Keyboard Driver";
+    keyboard_dev->phys = "keyboard/input0";
+    keyboard_dev->id.bustype = BUS_I8042;
+    keyboard_dev->id.vendor = 0x0001;
+    keyboard_dev->id.product = 0x0001;
+    keyboard_dev->id.version = 0x0100;
+
+    // 注册输入设备
+    result = input_register_device(keyboard_dev);
+    if (result) {
+        printk(KERN_ERR "Unable to register input device.\n");
+        input_free_device(keyboard_dev);
+        return result;
+    }
+
+    // 请求中断
+    result = request_irq(KEYBOARD_IRQ, keyboard_interrupt, IRQF_SHARED, "simple_keyboard", (void *)(keyboard_interrupt));
+    if (result) {
+        printk(KERN_ERR "Unable to request IRQ.\n");
+        input_unregister_device(keyboard_dev);
+        return result;
+    }
+
+    printk(KERN_INFO "Simple keyboard driver initialized.\n");
+    return 0;
+}
+
+static void __exit keyboard_exit(void) {
+    free_irq(KEYBOARD_IRQ, (void *)(keyboard_interrupt));
+    input_unregister_device(keyboard_dev);
+    printk(KERN_INFO "Simple keyboard driver exited.\n");
+}
+
+module_init(keyboard_init);
+module_exit(keyboard_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Simple Keyboard Driver");
+
+解释
+确认中断源:
+
+在这个示例中，假设中断已经正确地路由到键盘中断处理程序，因此没有显式地确认中断源。
+读取按键扫描码:
+
+scancode = inb(KBD_DATA_REG);
+
+使用inb函数从I/O端口0x60读取扫描码。
+处理扫描码:
+
+keydown = !(scancode & 0x80);
+scancode = scancode & 0x7F;
+
+检查最高位以区分按键按下（keydown）和按键释放（keyup）。
+去掉最高位得到实际的扫描码。
+生成输入事件:
+
+keycode = get_keycode(scancode);
+input_report_key(keyboard_dev, keycode, keydown);
+input_sync(keyboard_dev);
+
+将扫描码转换为键码。
+使用input_report_key函数向输入子系统报告按键事件。
+使用input_sync函数同步事件。
+处理键盘LED状态:
+
+示例中没有处理键盘LED状态，但在实际驱动中可能需要。
+清除中断请求:
+
+示例中没有显式的清除中断请求，因为大多数硬件在读取扫描码后会自动清除中断。
+总结
+键盘中断处理程序的主要任务是读取按键扫描码、处理扫描码、生成输入事件并将其传递给输入子系统。这个过程确保了按键事件能够正确地从硬件传递到用户空间的应用程序。在实际驱动程序中，可能还需要处理键盘LED状态和其他特定硬件特性。
+
+input_report_key(keyboard_dev, keycode, keydown); input_sync(keyboard_dev);这两个也是内核接口吗？
+
+是的，input_report_key和input_sync都是Linux内核输入子系统提供的接口函数，用于驱动程序向输入子系统报告输入事件并同步这些事件。
+
+input_report_key
+void input_report_key(struct input_dev *dev, unsigned int code, int value);
+
+作用: 报告一个键的状态变化事件。
+dev: 输入设备结构体指针。
+code: 键码（key code），表示具体的按键。
+value: 按键状态，通常为1表示按下，0表示释放。
+内核接口: 是的，这是一个内核接口函数，用于将按键事件报告给输入子系统。
+input_sync
+void input_sync(struct input_dev *dev);
+
+作用: 同步报告的输入事件，确保事件能够被正确处理和传递。
+dev: 输入设备结构体指针。
+内核接口: 是的，这是一个内核接口函数，用于同步输入事件。
+详细解释
+input_report_key
+当键盘中断处理程序检测到一个按键按下或释放事件时，它需要调用input_report_key函数来报告这个事件。这个函数会将按键事件存储在输入设备的事件队列中，等待进一步处理。
+
+input_report_key(keyboard_dev, keycode, keydown);
+
+keyboard_dev: 表示键盘设备。
+keycode: 表示具体的按键（如'A'键、'Enter'键等）。
+keydown: 表示按键状态（1表示按下，0表示释放）。
+input_sync
+在调用input_report_key报告按键事件后，驱动程序需要调用input_sync函数来同步这些事件。input_sync函数会通知输入子系统已经完成了事件的报告，输入子系统可以处理这些事件并将其传递给用户空间。
+
+input_sync(keyboard_dev);
+
+keyboard_dev: 表示键盘设备。
+示例代码：结合input_report_key和input_sync
+以下是一个示例，展示如何在键盘中断处理程序中使用input_report_key和input_sync来报告按键事件并同步：
+
+irqreturn_t keyboard_interrupt(int irq, void *dev_id) {
+    unsigned char scancode;
+    int keycode;
+    int keydown;
+
+    // 读取扫描码
+    scancode = inb(KBD_DATA_REG);
+
+    // 处理扫描码，区分按下和释放事件
+    keydown = !(scancode & 0x80);
+    scancode = scancode & 0x7F;
+
+    // 将扫描码转换为键码（这里假设有一个函数get_keycode实现转换）
+    keycode = get_keycode(scancode);
+
+    // 向输入子系统报告按键事件
+    input_report_key(keyboard_dev, keycode, keydown);
+    input_sync(keyboard_dev);
+
+    return IRQ_HANDLED;
+}
+
+总结
+**input_report_key和input_sync**都是Linux内核提供的接口函数，属于输入子系统的一部分。
+**input_report_key**用于报告具体的按键事件（按下或释放）。
+**input_sync**用于同步事件，确保输入子系统可以正确处理和传递这些事件。
+这些内核接口函数使得驱动程序能够将硬件事件（如按键事件）报告给输入子系统，从而使用户空间的应用程序可以正确地接收到这些事件并做出相应的响应。
+
+
+如果是用户程序主动发起的事件，比如打印，那么这个驱动是怎么响应这个事件的呢？
+
+用户空间程序主动发起的事件（如打印任务）需要通过特定的接口与设备驱动程序进行通信。一般来说，这种通信通常通过以下几种方式实现：
+
+设备文件（Device Files）
+ioctl（输入输出控制）
+sysfs文件系统
+Netlink套接字
+我们以一个打印任务的例子来详细说明如何通过设备文件和ioctl来实现用户空间程序与设备驱动程序的通信。
+
+示例：打印任务
+假设我们有一个打印机驱动程序，用户空间程序通过设备文件/dev/printer与打印机驱动程序通信。
+
+用户空间程序
+用户空间程序通过打开设备文件，向设备文件写数据，或通过ioctl发送控制命令来发起打印任务。
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+
+#define PRINTER_IOCTL_PRINT _IOW('p', 1, struct print_data)
+
+struct print_data {
+    char *buffer;
+    size_t length;
+};
+
+int main() {
+    int fd = open("/dev/printer", O_RDWR);
+    if (fd < 0) {
+        perror("Failed to open printer device");
+        return 1;
+    }
+
+    // 要打印的字符串
+    const char *print_str = "Hello, Printer!";
+    struct print_data pdata;
+    pdata.buffer = (char *)print_str;
+    pdata.length = strlen(print_str);
+
+    // 通过ioctl发送打印命令
+    if (ioctl(fd, PRINTER_IOCTL_PRINT, &pdata) < 0) {
+        perror("Failed to send print command");
+        close(fd);
+        return 1;
+    }
+
+    close(fd);
+    return 0;
+}
+
+内核驱动程序
+内核驱动程序需要实现对设备文件的操作和ioctl命令的处理。
+
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+
+#define DEVICE_NAME "printer"
+#define PRINTER_IOCTL_PRINT _IOW('p', 1, struct print_data)
+
+struct print_data {
+    char *buffer;
+    size_t length;
+};
+
+static int device_open(struct inode *inode, struct file *file) {
+    printk(KERN_INFO "Printer device opened\n");
+    return 0;
+}
+
+static int device_release(struct inode *inode, struct file *file) {
+    printk(KERN_INFO "Printer device closed\n");
+    return 0;
+}
+
+static long device_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
+    struct print_data pdata;
+    char *kernel_buffer;
+
+    switch (cmd) {
+        case PRINTER_IOCTL_PRINT:
+            if (copy_from_user(&pdata, (struct print_data *)arg, sizeof(struct print_data))) {
+                return -EFAULT;
+            }
+
+            kernel_buffer = kmalloc(pdata.length, GFP_KERNEL);
+            if (!kernel_buffer) {
+                return -ENOMEM;
+            }
+
+            if (copy_from_user(kernel_buffer, pdata.buffer, pdata.length)) {
+                kfree(kernel_buffer);
+                return -EFAULT;
+            }
+
+            // 模拟打印操作
+            printk(KERN_INFO "Printing: %s\n", kernel_buffer);
+
+            kfree(kernel_buffer);
+            break;
+
+        default:
+            return -EINVAL;
+    }
+
+    return 0;
+}
+
+static struct file_operations fops = {
+    .open = device_open,
+    .release = device_release,
+    .unlocked_ioctl = device_ioctl,
+};
+
+static int __init printer_init(void) {
+    int ret;
+
+    ret = register_chrdev(0, DEVICE_NAME, &fops);
+    if (ret < 0) {
+        printk(KERN_ALERT "Failed to register character device\n");
+        return ret;
+    }
+
+    printk(KERN_INFO "Printer driver initialized\n");
+    return 0;
+}
+
+static void __exit printer_exit(void) {
+    unregister_chrdev(0, DEVICE_NAME);
+    printk(KERN_INFO "Printer driver exited\n");
+}
+
+module_init(printer_init);
+module_exit(printer_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Simple Printer Driver");
+
+解释
+用户空间程序：
+
+打开设备文件/dev/printer。
+构造一个print_data结构体，包含要打印的字符串及其长度。
+通过ioctl发送PRINTER_IOCTL_PRINT命令，将print_data结构体传递给驱动程序。
+内核驱动程序：
+
+实现设备文件的open、release和ioctl操作。
+在ioctl操作中，处理PRINTER_IOCTL_PRINT命令：
+从用户空间复制print_data结构体。
+分配内核缓冲区并从用户空间复制要打印的数据。
+模拟打印操作（通过printk输出到内核日志）。
+释放内核缓冲区。
+总结
+用户空间程序通过设备文件和ioctl与内核驱动程序通信，实现主动发起的事件（如打印任务）。内核驱动程序通过实现相应的文件操作函数和ioctl处理函数，对用户空间程序的请求做出响应。这样，用户空间程序可以通过受控和安全的方式与内核驱动程序进行交互。
+
+如果外设工作生成的数据并不是通用的，不能像keyboard_interrupt通过内核接口上报给子系统，是否就是通过设备文件缓存？
+
+是的，如果外设生成的数据并不是通用的，不能像键盘那样通过内核接口上报给输入子系统，通常可以使用设备文件（device files）来处理这些数据。设备文件是用户空间程序与内核驱动程序之间通信的桥梁，适用于各种类型的设备，不论其生成的数据格式是否通用。
+
+使用设备文件处理外设数据
+通过设备文件，驱动程序可以将外设生成的数据存储在内核缓冲区中，用户空间程序则可以通过读取设备文件来获取这些数据。下面是一个示例，展示如何通过设备文件处理外设生成的非通用数据。
+
+示例：传感器数据
+假设我们有一个传感器设备，它生成的数据格式不是通用的。我们可以通过设备文件将这些数据传递给用户空间程序。
+
+内核驱动程序
+定义设备文件操作函数：
+
+实现open、read、write、release等文件操作函数。
+使用内核缓冲区存储传感器数据。
+模拟传感器数据生成：
+
+模拟传感器数据生成过程，并将数据存储到内核缓冲区。
+实现设备文件的读操作：
+
+用户空间程序通过读取设备文件来获取传感器数据。
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+
+#define DEVICE_NAME "sensor"
+#define BUFFER_SIZE 1024
+
+static int major_number;
+static char *sensor_buffer;
+static size_t buffer_pos;
+static struct class *sensor_class = NULL;
+static struct device *sensor_device = NULL;
+
+static int device_open(struct inode *inode, struct file *file) {
+    printk(KERN_INFO "Sensor device opened\n");
+    return 0;
+}
+
+static int device_release(struct inode *inode, struct file *file) {
+    printk(KERN_INFO "Sensor device closed\n");
+    return 0;
+}
+
+static ssize_t device_read(struct file *file, char __user *user_buffer, size_t len, loff_t *offset) {
+    ssize_t bytes_read;
+
+    if (*offset >= buffer_pos) {
+        return 0; // End of buffer
+    }
+
+    if (*offset + len > buffer_pos) {
+        len = buffer_pos - *offset; // Adjust length to avoid reading beyond buffer
+    }
+
+    if (copy_to_user(user_buffer, sensor_buffer + *offset, len)) {
+        return -EFAULT;
+    }
+
+    *offset += len;
+    bytes_read = len;
+
+    return bytes_read;
+}
+
+static struct file_operations fops = {
+    .open = device_open,
+    .release = device_release,
+    .read = device_read,
+};
+
+static int __init sensor_init(void) {
+    major_number = register_chrdev(0, DEVICE_NAME, &fops);
+    if (major_number < 0) {
+        printk(KERN_ALERT "Failed to register character device\n");
+        return major_number;
+    }
+
+    sensor_class = class_create(THIS_MODULE, DEVICE_NAME);
+    if (IS_ERR(sensor_class)) {
+        unregister_chrdev(major_number, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to create device class\n");
+        return PTR_ERR(sensor_class);
+    }
+
+    sensor_device = device_create(sensor_class, NULL, MKDEV(major_number, 0), NULL, DEVICE_NAME);
+    if (IS_ERR(sensor_device)) {
+        class_destroy(sensor_class);
+        unregister_chrdev(major_number, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to create device\n");
+        return PTR_ERR(sensor_device);
+    }
+
+    sensor_buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
+    if (!sensor_buffer) {
+        device_destroy(sensor_class, MKDEV(major_number, 0));
+        class_destroy(sensor_class);
+        unregister_chrdev(major_number, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to allocate buffer\n");
+        return -ENOMEM;
+    }
+
+    // 模拟传感器数据生成
+    snprintf(sensor_buffer, BUFFER_SIZE, "Sensor Data: Temperature=25.5, Humidity=60%%");
+    buffer_pos = strlen(sensor_buffer);
+
+    printk(KERN_INFO "Sensor driver initialized\n");
+    return 0;
+}
+
+static void __exit sensor_exit(void) {
+    kfree(sensor_buffer);
+    device_destroy(sensor_class, MKDEV(major_number, 0));
+    class_destroy(sensor_class);
+    unregister_chrdev(major_number, DEVICE_NAME);
+    printk(KERN_INFO "Sensor driver exited\n");
+}
+
+module_init(sensor_init);
+module_exit(sensor_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Simple Sensor Driver");
+
+用户空间程序
+用户空间程序通过读取设备文件来获取传感器数据。
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define BUFFER_SIZE 1024
+
+int main() {
+    int fd;
+    char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+
+    fd = open("/dev/sensor", O_RDONLY);
+    if (fd < 0) {
+        perror("Failed to open sensor device");
+        return 1;
+    }
+
+    bytes_read = read(fd, buffer, BUFFER_SIZE - 1);
+    if (bytes_read < 0) {
+        perror("Failed to read from sensor device");
+        close(fd);
+        return 1;
+    }
+
+    buffer[bytes_read] = '\0';
+    printf("Sensor Data: %s\n", buffer);
+
+    close(fd);
+    return 0;
+}
+
+解释
+内核驱动程序：
+
+初始化：在模块初始化函数中，注册字符设备并创建设备文件，分配内核缓冲区并模拟传感器数据生成。
+文件操作：实现open、release和read操作函数，处理设备文件的打开、关闭和读取操作。
+数据读取：在device_read函数中，从内核缓冲区读取传感器数据并复制到用户空间缓冲区。
+用户空间程序：
+
+打开设备文件：使用open系统调用打开设备文件/dev/sensor。
+读取数据：使用read系统调用从设备文件读取传感器数据并打印到标准输出。
+总结
+当外设生成的数据不是通用的，不能通过标准的内核接口上报给子系统时，可以通过设备文件来缓存和传递这些数据。内核驱动程序可以将数据存储在内核缓冲区中，用户空间程序通过读取设备文件来获取这些数据。这种方式提供了一种灵活的机制，适用于各种自定义数据格式和设备。
+
+除了设备文件缓存还有别的方式传递或者存储吗？
+
+除了设备文件缓存之外，还有其他几种方法可以在用户空间程序和内核驱动程序之间传递或存储数据。这些方法包括：
+
+1. ioctl（输入输出控制）
+ioctl（输入输出控制）是一个通用的系统调用，允许用户空间程序向设备驱动程序发送控制命令和数据。它非常灵活，可以用于传递各种类型的数据。
+
+示例
+用户空间程序：
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <string.h>
+
+#define DEVICE_FILE "/dev/mydevice"
+#define IOCTL_CMD _IOW('m', 1, char*)
+
+int main() {
+    int fd = open(DEVICE_FILE, O_RDWR);
+    if (fd < 0) {
+        perror("Failed to open device file");
+        return 1;
+    }
+
+    char data[] = "Hello, kernel!";
+    if (ioctl(fd, IOCTL_CMD, data) < 0) {
+        perror("Failed to send ioctl command");
+        close(fd);
+        return 1;
+    }
+
+    close(fd);
+    return 0;
+}
+
+内核驱动程序：
+
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+
+#define DEVICE_NAME "mydevice"
+#define IOCTL_CMD _IOW('m', 1, char*)
+
+static long device_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
+    char buffer[128];
+
+    switch (cmd) {
+        case IOCTL_CMD:
+            if (copy_from_user(buffer, (char __user *)arg, sizeof(buffer))) {
+                return -EFAULT;
+            }
+            printk(KERN_INFO "Received from user: %s\n", buffer);
+            break;
+        default:
+            return -EINVAL;
+    }
+
+    return 0;
+}
+
+static struct file_operations fops = {
+    .unlocked_ioctl = device_ioctl,
+};
+
+static int __init mydevice_init(void) {
+    int ret = register_chrdev(0, DEVICE_NAME, &fops);
+    if (ret < 0) {
+        printk(KERN_ALERT "Failed to register character device\n");
+        return ret;
+    }
+    printk(KERN_INFO "Device registered with major number %d\n", ret);
+    return 0;
+}
+
+static void __exit mydevice_exit(void) {
+    unregister_chrdev(0, DEVICE_NAME);
+    printk(KERN_INFO "Device unregistered\n");
+}
+
+module_init(mydevice_init);
+module_exit(mydevice_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Simple IOCTL Example");
+
+2. proc文件系统
+proc文件系统是一个虚拟文件系统，用于与内核和进程相关的信息交换。驱动程序可以在/proc文件系统中创建文件，用户空间程序可以通过读写这些文件与驱动程序交互。
+
+示例
+内核驱动程序：
+
+#include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <linux/uaccess.h>
+
+#define PROC_NAME "myprocfile"
+#define BUFFER_SIZE 128
+
+static char proc_buffer[BUFFER_SIZE];
+static unsigned long proc_buffer_size = 0;
+
+ssize_t proc_read(struct file *file, char __user *buf, size_t count, loff_t *pos) {
+    if (*pos > 0 || count < proc_buffer_size) {
+        return 0;
+    }
+
+    if (copy_to_user(buf, proc_buffer, proc_buffer_size)) {
+        return -EFAULT;
+    }
+
+    *pos = proc_buffer_size;
+    return proc_buffer_size;
+}
+
+ssize_t proc_write(struct file *file, const char __user *buf, size_t count, loff_t *pos) {
+    if (count > BUFFER_SIZE) {
+        proc_buffer_size = BUFFER_SIZE;
+    } else {
+        proc_buffer_size = count;
+    }
+
+    if (copy_from_user(proc_buffer, buf, proc_buffer_size)) {
+        return -EFAULT;
+    }
+
+    return proc_buffer_size;
+}
+
+static struct file_operations proc_fops = {
+    .owner = THIS_MODULE,
+    .read = proc_read,
+    .write = proc_write,
+};
+
+static int __init mymodule_init(void) {
+    proc_create(PROC_NAME, 0666, NULL, &proc_fops);
+    printk(KERN_INFO "/proc/%s created\n", PROC_NAME);
+    return 0;
+}
+
+static void __exit mymodule_exit(void) {
+    remove_proc_entry(PROC_NAME, NULL);
+    printk(KERN_INFO "/proc/%s removed\n", PROC_NAME);
+}
+
+module_init(mymodule_init);
+module_exit(mymodule_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Simple ProcFS Example");
+
+用户空间程序：
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+
+#define PROC_FILE "/proc/myprocfile"
+
+int main() {
+    int fd = open(PROC_FILE, O_RDWR);
+    if (fd < 0) {
+        perror("Failed to open proc file");
+        return 1;
+    }
+
+    char write_buffer[] = "Hello, proc!";
+    if (write(fd, write_buffer, strlen(write_buffer)) < 0) {
+        perror("Failed to write to proc file");
+        close(fd);
+        return 1;
+    }
+
+    char read_buffer[128];
+    if (lseek(fd, 0, SEEK_SET) < 0) {
+        perror("Failed to seek proc file");
+        close(fd);
+        return 1;
+    }
+
+    if (read(fd, read_buffer, sizeof(read_buffer) - 1) < 0) {
+        perror("Failed to read from proc file");
+        close(fd);
+        return 1;
+    }
+
+    printf("Read from proc file: %s\n", read_buffer);
+    close(fd);
+    return 0;
+}
+
+3. sysfs文件系统
+sysfs文件系统是一个虚拟文件系统，通常用于导出内核对象及其属性。驱动程序可以在/sys文件系统中创建文件，用户空间程序可以通过读写这些文件与驱动程序交互。
+
+示例
+内核驱动程序：
+
+#include <linux/module.h>
+#include <linux/kobject.h>
+#include <linux/sysfs.h>
+#include <linux/uaccess.h>
+
+#define BUFFER_SIZE 128
+
+static char sysfs_buffer[BUFFER_SIZE];
+static struct kobject *example_kobj;
+
+ssize_t sysfs_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
+    return sprintf(buf, "%s\n", sysfs_buffer);
+}
+
+ssize_t sysfs_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
+    snprintf(sysfs_buffer, BUFFER_SIZE, "%s", buf);
+    return count;
+}
+
+static struct kobj_attribute example_attr = __ATTR(example, 0664, sysfs_show, sysfs_store);
+
+static int __init example_init(void) {
+    int retval;
+
+    example_kobj = kobject_create_and_add("example", kernel_kobj);
+    if (!example_kobj) {
+        return -ENOMEM;
+    }
+
+    retval = sysfs_create_file(example_kobj, &example_attr.attr);
+    if (retval) {
+        kobject_put(example_kobj);
+    }
+
+    return retval;
+}
+
+static void __exit example_exit(void) {
+    kobject_put(example_kobj);
+}
+
+module_init(example_init);
+module_exit(example_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Simple SysFS Example");
+
+用户空间程序：
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+
+#define SYSFS_FILE "/sys/kernel/example/example"
+
+int main() {
+    int fd = open(SYSFS_FILE, O_RDWR);
+    if (fd < 0) {
+        perror("Failed to open sysfs file");
+        return 1;
+    }
+
+    char write_buffer[] = "Hello, sysfs!";
+    if (write(fd, write_buffer, strlen(write_buffer)) < 0) {
+        perror("Failed to write to sysfs file");
+        close(fd);
+        return 1;
+    }
+
+    char read_buffer[128];
+    if (lseek(fd, 0, SEEK_SET) < 0) {
+        perror("Failed to seek sysfs file");
+        close(fd);
+        return 1;
+    }
+
+    if (read(fd, read_buffer, sizeof(read_buffer) - 1) < 0) {
+        perror("Failed to read from sysfs file");
+        close(fd);
+        return 1;
+    }
+
+    printf("Read from sysfs file: %s\n", read_buffer);
+    close(fd);
+    return 0;
+}
+
+4. Netlink套接字
+Netlink套接字是用于用户空间和内核空间之间传递信息的机制，特别适用于复杂的消息传递和配置。
+
+示例
+内核驱动程序：
+
+#include <linux/module.h>
+#include <linux/netlink.h>
+#include <net/sock.h>
+
+#define NETLINK_USER 31
+
+struct sock *nl_sk = NULL;
+
+static void nl_recv_msg(struct sk_buff *skb) {
+    struct nlmsghdr *nlh;
+    char *msg = "Hello from kernel";
+    struct sk_buff *skb_out;
+    int msg_size;
+    int res;
+
+    nlh = (struct nlmsghdr *)skb->data;
+    printk(KERN_INFO "Netlink received msg payload:%s\n", (char *)nlmsg_data(nlh));
+
+    msg_size = strlen(msg);
+    skb_out = nlmsg_new(msg_size, 0);
+    if (!skb_out) {
+        printk(KERN_ERR "Failed to allocate new skb\n");
+        return;
+    }
+
+    nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, msg_size, 0);
+    NETLINK_CB(skb_out).dst_group = 0;
+    strncpy(nlmsg_data(nlh), msg, msg_size);
+
+    res = nlmsg_unicast(nl_sk, skb_out, nlh->nlmsg_pid);
+    if (res < 0) {
+        printk(KERN_INFO "Error while sending back to user\n");
+    }
+}
+
+static int __init hello_init(void) {
+    struct netlink_kernel_cfg cfg = {
+        .input = nl_recv_msg,
+    };
+
+    nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, &cfg);
+    if (!nl_sk) {
+        printk(KERN_ALERT "Error creating socket.\n");
+        return -10;
+    }
+
+    return 0;
+}
+
+static void __exit hello_exit(void) {
+    netlink_kernel_release(nl_sk);
+}
+
+module_init(hello_init);
+module_exit(hello_exit);
+
+MODULE_LICENSE("GPL");
+
+用户空间程序：
+
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <linux/netlink.h>
+
+#define NETLINK_USER 31
+
+struct sockaddr_nl src_addr, dest_addr;
+struct nlmsghdr *nlh = NULL;
+struct iovec iov;
+int sock_fd;
+struct msghdr msg;
+
+int main() {
+    sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_USER);
+    if (sock_fd < 0) {
+        return -1;
+    }
+
+    memset(&src_addr, 0, sizeof(src_addr));
+    src_addr.nl_family = AF_NETLINK;
+    src_addr.nl_pid = getpid(); // Self pid
+
+    bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
+
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.nl_family = AF_NETLINK;
+    dest_addr.nl_pid = 0; // For Linux Kernel
+    dest_addr.nl_groups = 0; // unicast
+
+    nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(1024));
+    memset(nlh, 0, NLMSG_SPACE(1024));
+    nlh->nlmsg_len = NLMSG_SPACE(1024);
+    nlh->nlmsg_pid = getpid();
+    nlh->nlmsg_flags = 0;
+
+    strcpy(NLMSG_DATA(nlh), "Hello from user");
+
+    iov.iov_base = (void *)nlh;
+    iov.iov_len = nlh->nlmsg_len;
+    msg.msg_name = (void *)&dest_addr;
+    msg.msg_namelen = sizeof(dest_addr);
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+
+    sendmsg(sock_fd, &msg, 0);
+
+    // Read message from kernel
+    recvmsg(sock_fd, &msg, 0);
+    printf("Received message payload: %s\n", (char *)NLMSG_DATA(nlh));
+
+    close(sock_fd);
+    return 0;
+}
+
+5. 共享内存
+共享内存是一种高效的数据传递方式，用户空间程序和内核驱动程序可以通过共享内存区域交换数据。通常使用mmap系统调用在用户空间和内核空间之间创建共享内存区域。
+
+示例
+内核驱动程序：
+
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+
+#define DEVICE_NAME "shmdevice"
+#define BUFFER_SIZE 4096
+
+static char *shared_buffer;
+static int major_number;
+
+static int device_mmap(struct file *file, struct vm_area_struct *vma) {
+    unsigned long pfn = virt_to_phys(shared_buffer) >> PAGE_SHIFT;
+    size_t size = vma->vm_end - vma->vm_start;
+
+    if (size > BUFFER_SIZE) {
+        return -EINVAL;
+    }
+
+    return remap_pfn_range(vma, vma->vm_start, pfn, size, vma->vm_page_prot);
+}
+
+static struct file_operations fops = {
+    .mmap = device_mmap,
+};
+
+static int __init shmdevice_init(void) {
+    major_number = register_chrdev(0, DEVICE_NAME, &fops);
+    if (major_number < 0) {
+        printk(KERN_ALERT "Failed to register character device\n");
+        return major_number;
+    }
+
+    shared_buffer = kzalloc(BUFFER_SIZE, GFP_KERNEL);
+    if (!shared_buffer) {
+        unregister_chrdev(major_number, DEVICE_NAME);
+        return -ENOMEM;
+    }
+
+    printk(KERN_INFO "Shared memory device initialized\n");
+    return 0;
+}
+
+static void __exit shmdevice_exit(void) {
+    kfree(shared_buffer);
+    unregister_chrdev(major_number, DEVICE_NAME);
+    printk(KERN_INFO "Shared memory device removed\n");
+}
+
+module_init(shmdevice_init);
+module_exit(shmdevice_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("An Example Author");
+MODULE_DESCRIPTION("A Shared Memory Example");
+
+用户空间程序：
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <string.h>
+
+#define DEVICE_FILE "/dev/shmdevice"
+#define BUFFER_SIZE 4096
+
+int main() {
+    int fd = open(DEVICE_FILE, O_RDWR);
+    if (fd < 0) {
+        perror("Failed to open device file");
+        return 1;
+    }
+
+    char *shared_mem = mmap(NULL, BUFFER_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (shared_mem == MAP_FAILED) {
+        perror("Failed to mmap");
+        close(fd);
+        return 1;
+    }
+
+    strcpy(shared_mem, "Hello from user space!");
+
+    printf("Read from shared memory: %s\n", shared_mem);
+
+    munmap(shared_mem, BUFFER_SIZE);
+    close(fd);
+    return 0;
+}
+
+总结
+除了设备文件缓存之外，还有多种方法可以在用户空间程序和内核驱动程序之间传递或存储数据。选择哪种方法取决于具体的应用场景、数据类型和性能需求。常见的方法包括：
+
+ioctl: 用于发送控制命令和数据，灵活且通用。
+proc文件系统: 适用于简单的配置和状态信息交换。
+sysfs文件系统: 适用于导出内核对象及其属性。
+Netlink套接字: 适用于复杂的消息传递和配置。
+共享内存: 提供高效的数据传递方式，适用于大数据量的交换。
+这些方法提供了丰富的工具，允许用户空间程序和内核驱动程序之间进行高效、安全和灵活的通信。
+===================================================================================================
+
+以下是合并后的完整字符设备驱动程序代码，包含打开、关闭、读、写以及 poll 操作的实现：
+
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+#include <linux/poll.h>
+#include <linux/wait.h>
+#include <linux/device.h>
+
+#define DEVICE_NAME "mychardev"
+#define BUFFER_SIZE 1024
+
+static int major_number;
+static char device_buffer[BUFFER_SIZE];
+static int buffer_size = 0;
+static wait_queue_head_t device_wait_queue;
+static int device_open_count = 0;
+static struct class *device_class;
+static struct device *device_object;
+
+static int device_open(struct inode *, struct file *);
+static int device_release(struct inode *, struct file *);
+static ssize_t device_read(struct file *, char __user *, size_t, loff_t *);
+static ssize_t device_write(struct file *, const char __user *, size_t, loff_t *);
+static unsigned int device_poll(struct file *, poll_table *);
+
+static struct file_operations fops = {
+    .owner = THIS_MODULE,
+    .open = device_open,
+    .release = device_release,
+    .read = device_read,
+    .write = device_write,
+    .poll = device_poll,
+};
+
+static int device_open(struct inode *inode, struct file *file) {
+    if (device_open_count) {
+        return -EBUSY;
+    }
+    device_open_count++;
+    try_module_get(THIS_MODULE);
+    return 0;
+}
+
+static int device_release(struct inode *inode, struct file *file) {
+    device_open_count--;
+    module_put(THIS_MODULE);
+    return 0;
+}
+
+static ssize_t device_read(struct file *file, char __user *user_buffer, size_t count, loff_t *offset) {
+    int bytes_to_read = min(count, (size_t)buffer_size);
+    if (bytes_to_read == 0) {
+        return 0;
+    }
+
+    if (copy_to_user(user_buffer, device_buffer, bytes_to_read) != 0) {
+        return -EFAULT;
+    }
+
+    buffer_size = 0;
+    return bytes_to_read;
+}
+
+static ssize_t device_write(struct file *file, const char __user *user_buffer, size_t count, loff_t *offset) {
+    int bytes_to_write = min(count, (size_t)(BUFFER_SIZE - buffer_size));
+    if (bytes_to_write == 0) {
+        return -ENOMEM;
+    }
+
+    if (copy_from_user(device_buffer, user_buffer, bytes_to_write) != 0) {
+        return -EFAULT;
+    }
+
+    buffer_size = bytes_to_write;
+    wake_up_interruptible(&device_wait_queue); // 唤醒等待队列中的进程
+    return bytes_to_write;
+}
+
+static unsigned int device_poll(struct file *file, poll_table *wait) {
+    unsigned int mask = 0;
+
+    poll_wait(file, &device_wait_queue, wait);
+
+    if (buffer_size > 0) {
+        mask |= POLLIN | POLLRDNORM;
+    }
+
+    if (buffer_size < BUFFER_SIZE) {
+        mask |= POLLOUT | POLLWRNORM;
+    }
+
+    return mask;
+}
+
+static int __init device_init(void) {
+    major_number = register_chrdev(0, DEVICE_NAME, &fops);
+    if (major_number < 0) {
+        printk(KERN_ALERT "Failed to register a major number\n");
+        return major_number;
+    }
+
+    device_class = class_create(THIS_MODULE, DEVICE_NAME);
+    if (IS_ERR(device_class)) {
+        unregister_chrdev(major_number, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to register device class\n");
+        return PTR_ERR(device_class);
+    }
+
+    device_object = device_create(device_class, NULL, MKDEV(major_number, 0), NULL, DEVICE_NAME);
+    if (IS_ERR(device_object)) {
+        class_destroy(device_class);
+        unregister_chrdev(major_number, DEVICE_NAME);
+        printk(KERN_ALERT "Failed to create the device\n");
+        return PTR_ERR(device_object);
+    }
+
+    init_waitqueue_head(&device_wait_queue);
+
+    printk(KERN_INFO "Device initialized: %s with major number %d\n", DEVICE_NAME, major_number);
+    return 0;
+}
+
+static void __exit device_exit(void) {
+    device_destroy(device_class, MKDEV(major_number, 0));
+    class_unregister(device_class);
+    class_destroy(device_class);
+    unregister_chrdev(major_number, DEVICE_NAME);
+    printk(KERN_INFO "Device exited: %s\n", DEVICE_NAME);
+}
+
+module_init(device_init);
+module_exit(device_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Your Name");
+MODULE_DESCRIPTION("A simple character device driver with poll support");
+MODULE_VERSION("1.0");
+
+代码说明
+头文件和宏定义：包含了所需的头文件和一些宏定义。
+全局变量：定义了设备缓冲区、等待队列、设备打开计数等。
+文件操作函数原型和实现：
+device_open：处理设备文件的打开。
+device_release：处理设备文件的关闭。
+device_read：处理从设备读取数据。
+device_write：处理向设备写入数据。
+device_poll：处理 poll 系统调用，使得设备支持非阻塞I/O和多路复用。
+模块初始化和退出函数：
+device_init：注册字符设备并创建设备类和设备对象。
+device_exit：销毁设备对象和设备类，并注销字符设备。
+通过这些代码，您可以创建一个支持 poll 操作的简单字符设备驱动程序。应用程序可以使用 poll、select 或 epoll 等系统调用来监视设备文件描述符的状态，从而实现非阻塞和多路复用的I/O操作。
+===================================================================================================
+
+gcc -o example example.c $(pkg-config --cflags --libs libevent)
+
+"args": ["-H", "localhost", "-s", "127.0.0.1:12345"],
+
+
+select能得到fd的哪些状态
+
+select 系统调用用于监视多个文件描述符，并等待这些文件描述符中的一个或多个变为可读、可写或有异常条件发生。通过 select，你可以得到以下几种文件描述符的状态：
+
+可读状态（readable）： 如果文件描述符变为可读，意味着你可以从该文件描述符中读取数据而不会阻塞。这通常用于监视输入操作，例如：
+
+文件、管道或终端中有数据可供读取。
+网络套接字（TCP/UDP）中有数据到达。
+可写状态（writable）： 如果文件描述符变为可写，意味着你可以向该文件描述符写入数据而不会阻塞。这通常用于监视输出操作，例如：
+
+文件或管道可以接收数据写入。
+网络套接字（TCP/UDP）可以发送数据。
+异常状态（exceptional condition）： 如果文件描述符有异常条件发生，例如带外数据（Out-of-band data）到达。这通常用于监视特殊情况，例如：
+
+网络套接字上有带外数据到达（TCP 紧急数据）。
+select 的参数
+select 函数的原型如下：
+
+int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+
+参数解释：
+
+nfds：监视的文件描述符数量，即待监视的最大文件描述符加 1。
+readfds：指向包含待监视的可读文件描述符集合的 fd_set 结构。
+writefds：指向包含待监视的可写文件描述符集合的 fd_set 结构。
+exceptfds：指向包含待监视的异常文件描述符集合的 fd_set 结构。
+timeout：指向一个 timeval 结构，指定等待的超时时间。如果为 NULL，select 将无限期阻塞，直到监视的文件描述符之一发生状态变化。
+使用示例
+以下是一个使用 select 来监视文件描述符的示例，监视其可读、可写和异常状态：
+
+#include <sys/select.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    fd_set read_fds, write_fds, except_fds;
+    struct timeval timeout;
+    int fd;
+    char buffer[256];
+    int retval;
+
+    // 打开文件描述符
+    fd = open("/tmp/testfile", O_RDWR);
+    if (fd == -1) {
+        perror("open");
+        exit(EXIT_FAILURE);
+    }
+
+    // 初始化文件描述符集合
+    FD_ZERO(&read_fds);
+    FD_ZERO(&write_fds);
+    FD_ZERO(&except_fds);
+
+    // 添加文件描述符到集合
+    FD_SET(fd, &read_fds);
+    FD_SET(fd, &write_fds);
+    FD_SET(fd, &except_fds);
+
+    // 设置超时时间
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    // 调用 select 函数
+    // 监视3个fd集合
+    retval = select(fd + 1, &read_fds, &write_fds, &except_fds, &timeout);
+    if (retval == -1) {
+        perror("select");
+        exit(EXIT_FAILURE);
+    } else if (retval == 0) {
+        printf("Timeout occurred! No data within five seconds.\n");
+    } else {//集合中有fd状态变化
+        if (FD_ISSET(fd, &read_fds)) {//如果fd在可读集合，读取数据
+            printf("File descriptor %d is ready to read\n", fd);
+            read(fd, buffer, sizeof(buffer));
+            printf("Read data: %s\n", buffer);
+        }
+
+        if (FD_ISSET(fd, &write_fds)) {//如果fd在可写集合，写入数据
+            printf("File descriptor %d is ready to write\n", fd);
+            write(fd, "Hello, world!", 13);
+        }
+
+        if (FD_ISSET(fd, &except_fds)) {//如果fd在异常集合，处理异常
+            printf("File descriptor %d has an exceptional condition\n", fd);
+        }
+    }
+
+    close(fd);
+    return 0;
+}
+
+
+epoll怎么用，它能监视fd的哪些状态
+
+epoll 是 Linux 特有的高效 I/O 多路复用机制，可以高效地监视大量文件描述符。epoll 通过事件驱动模型和持久化的事件集合，解决了 select 和 poll 的性能问题。
+
+epoll 基本使用方法
+epoll 提供了三个主要的系统调用：
+
+epoll_create1：创建一个 epoll 实例。
+epoll_ctl：控制 epoll 实例，添加、修改或删除文件描述符。
+epoll_wait：等待文件描述符上的事件。
+示例代码
+以下是一个使用 epoll 的简单示例：
+#include <sys/epoll.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_EVENTS 10
+
+int main() {
+    int epoll_fd, fd;
+    struct epoll_event event, events[MAX_EVENTS];
+    char buffer[256];
+
+    // 创建一个 epoll 实例
+    epoll_fd = epoll_create1(0);
+    if (epoll_fd == -1) {
+        perror("epoll_create1");
+        exit(EXIT_FAILURE);
+    }
+
+    // 打开文件描述符
+    fd = open("/tmp/testfile", O_RDWR | O_NONBLOCK);
+    if (fd == -1) {
+        perror("open");
+        exit(EXIT_FAILURE);
+    }
+
+    // 设置 epoll 事件类型，监视所有状态
+    event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLET;
+    event.data.fd = fd;
+
+    // 将文件描述符添加到 epoll 实例
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event) == -1) {
+        perror("epoll_ctl");
+        exit(EXIT_FAILURE);
+    }
+
+    while (1) {
+        int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+        if (nfds == -1) {
+            perror("epoll_wait");
+            exit(EXIT_FAILURE);
+        }
+
+        for (int i = 0; i < nfds; ++i) {
+            if (events[i].events & EPOLLIN) {
+                // 处理读取事件
+                ssize_t count = read(events[i].data.fd, buffer, sizeof(buffer));
+                if (count == -1) {
+                    perror("read");
+                    exit(EXIT_FAILURE);
+                } else if (count == 0) {
+                    printf("EOF\n");
+                    close(events[i].data.fd);
+                } else {
+                    printf("Read %zd bytes: %.*s\n", count, (int)count, buffer);
+                }
+            }
+
+            if (events[i].events & EPOLLOUT) {
+                // 处理写入事件
+                printf("File descriptor %d is ready to write\n", events[i].data.fd);
+                ssize_t count = write(events[i].data.fd, "Hello, world!", 13);
+                if (count == -1) {
+                    perror("write");
+                    exit(EXIT_FAILURE);
+                } else {
+                    printf("Wrote %zd bytes\n", count);
+                }
+            }
+
+            if (events[i].events & EPOLLRDHUP) {
+                // 处理对端关闭事件
+                printf("Peer closed connection on file descriptor %d\n", events[i].data.fd);
+                close(events[i].data.fd);
+            }
+
+            if (events[i].events & EPOLLPRI) {
+                // 处理紧急数据事件
+                printf("File descriptor %d has urgent data available\n", events[i].data.fd);
+                ssize_t count = read(events[i].data.fd, buffer, sizeof(buffer));
+                if (count == -1) {
+                    perror("read");
+                    exit(EXIT_FAILURE);
+                } else {
+                    printf("Read %zd urgent bytes: %.*s\n", count, (int)count, buffer);
+                }
+            }
+
+            if (events[i].events & EPOLLERR) {
+                // 处理错误事件
+                printf("File descriptor %d has encountered an error\n", events[i].data.fd);
+                close(events[i].data.fd);
+            }
+
+            if (events[i].events & EPOLLHUP) {
+                // 处理挂起事件
+                printf("File descriptor %d has been hung up\n", events[i].data.fd);
+                close(events[i].data.fd);
+            }
+        }
+    }
+
+    close(epoll_fd);
+    return 0;
+}
+
+epoll 能监视的文件描述符状态
+epoll 可以监视多种文件描述符状态，使用 epoll_event 结构体中的 events 字段来指定感兴趣的事件类型。常用的事件类型包括：
+
+EPOLLIN：表示对应的文件描述符可以读取数据（包括普通文件、管道、网络套接字等）。
+EPOLLOUT：表示对应的文件描述符可以写入数据。
+EPOLLRDHUP：表示对端关闭连接或半关闭（常用于套接字）。
+EPOLLPRI：表示有紧急数据可读（常用于带外数据）。
+EPOLLERR：表示对应的文件描述符发生错误。
+EPOLLHUP：表示对应的文件描述符挂起事件。
+EPOLLET：将文件描述符设置为边缘触发模式（Edge Triggered）。
+EPOLLONESHOT：将文件描述符设置为一次性事件（一次触发后需要重新设置）。
+
+边缘触发模式和水平触发模式的区别：
+比如EPOLLIN 边缘触发只会在数据到达时触发一次，如果你只从缓存区读取一半数据，后续并不会再触发了（除非再有数据到达），而水平触发则是只要缓存区还有数据，它将一直触发
+所以在边缘触发处理 EPOLLIN 或 EPOLLOUT 事件时，应尽可能多地读取或写入数据，直到返回 EAGAIN（表示没有更多数据可读或写入缓冲区满）。
+以下是示例
+for (int i = 0; i < nfds; ++i) {
+            if (events[i].events & EPOLLIN) {
+                while (1) {
+                    char buffer[128];
+                    struct sockaddr_in client_addr;
+                    socklen_t addr_len = sizeof(client_addr);
+
+                    ssize_t bytesRead = recvfrom(events[i].data.fd, buffer, sizeof(buffer) - 1, 0,
+                                                 (struct sockaddr*)&client_addr, &addr_len);
+                    if (bytesRead == -1) {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                            // 没有更多数据可读
+                            break;
+                        } else {
+                            perror("recvfrom");
+                            close(events[i].data.fd);
+                            break;
+                        }
+                    } else {
+                        buffer[bytesRead] = '\0';
+                        printf("Received data: %s\n", buffer);
+
+                        // 回复客户端
+                        const char* reply = "Data received";
+                        ssize_t bytesSent = sendto(events[i].data.fd, reply, strlen(reply), 0,
+                                                   (struct sockaddr*)&client_addr, addr_len);
+                        if (bytesSent == -1) {
+                            perror("sendto");
+                        }
+                    }
+                }
+            }
+        }
+
+epoll 相关系统调用
+epoll_create1：
+
+int epoll_create1(int flags);
+
+创建一个新的 epoll 实例，并返回一个文件描述符。flags 参数通常为 0 或 EPOLL_CLOEXEC。
+
+epoll_ctl：
+
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+
+控制 epoll 实例，执行添加、删除或修改操作。
+
+epfd：epoll 实例的文件描述符。
+op：操作类型，可以是 EPOLL_CTL_ADD、EPOLL_CTL_MOD 或 EPOLL_CTL_DEL。
+fd：要操作的文件描述符。
+event：指向 epoll_event 结构体的指针。
+epoll_wait：
+
+int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+
+等待事件发生，并返回已触发事件的数量。
+
+epfd：epoll 实例的文件描述符。
+events：指向 epoll_event 数组的指针，用于返回已触发的事件。
+maxevents：events 数组的大小。
+timeout：超时时间，以毫秒为单位。若为 -1，则无限等待。
+总结
+epoll 提供了高效的 I/O 多路复用机制，适用于处理大量并发连接的高性能服务器。通过 epoll_create1 创建 epoll 实例，使用 epoll_ctl 进行文件描述符的添加、删除和修改操作，并通过 epoll_wait 等待文件描述符上的事件发生。epoll 可以监视多种文件描述符状态，包括可读、可写、异常等，特别适合高并发和高性能的网络应用场景。
+===================================================================================================
+epoll和udp
+
+对于 UDP 套接字（文件描述符，fd），某些 epoll 事件标志比其他标志更有用。让我们分别看一下这些标志，以及它们在 UDP 套接字中的适用性：
+
+EPOLLIN：表示有数据可读。这对于接收 UDP 数据报文是非常有用的。当有新的数据报文到达时，会触发这个事件。
+
+EPOLLOUT：表示可以发送数据。这对于发送 UDP 数据报文是有用的。对于大多数情况，UDP 套接字总是可以发送数据，因为它是无连接的，但在某些情况下（例如，系统缓冲区满了），这个事件可能会变得有用。
+
+EPOLLRDHUP：表示对端关闭连接。这个事件在 UDP 套接字中通常没有意义，因为 UDP 是无连接的协议，没有连接关闭的概念。
+
+EPOLLPRI：表示有紧急数据可读。这个事件对于 UDP 套接字来说通常不常见，因为紧急数据（带外数据）主要用于 TCP 套接字。
+
+EPOLLERR：表示发生错误。这个事件对于所有类型的套接字都是有用的，包括 UDP。当套接字发生错误（例如，网络错误）时，会触发这个事件。
+
+EPOLLHUP：表示挂起/挂断。对于 UDP 套接字，这种情况很少见，但可能在某些罕见的错误情况下发生。
+
+EPOLLET：表示使用边缘触发模式。这对所有类型的套接字都适用，包括 UDP。边缘触发模式可以提高性能，但需要更加小心地处理，以确保不会错过任何事件。
+
+g++ -c -g simple_event_array.cc -o simple_event_array.o
+gcc -c -g simple_event.c  -o simple_event.o
+gcc -c -g simple_event_test.c  -o simple_event_test.o
+g++ simple_event.o simple_event_test.o simple_event_array.o -o stest
+
+g++ simple_event_array.cc simple_event_test.c simple_event.c -o ptest
