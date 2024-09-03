@@ -221,6 +221,16 @@ objcopy --strip-debug --strip-unneeded foo
 加载分离的符号表调试  
 gdb -e foo -s foo.dbg
 
+去除所有符号信息
+要从 main 可执行文件中去除所有符号信息，直接运行：
+strip main
+这会从 main 文件中去除所有符号信息，包括调试信息和其他符号表信息。
+
+去除特定类型的符号信息
+如果你希望仅去除调试信息而保留其他符号，可以使用 --strip-debug 选项：
+strip --strip-debug main
+这样会仅去除调试符号，但保留其他符号信息，如函数名和全局变量名。
+
 
 ZRT_MgrSignIn  ZRT_CLD_Obj()
 
@@ -765,7 +775,32 @@ wpa_cli -i wlan0 set_network 0 psk '"puwell007"'
 wpa_cli -i wlan0 select_network 0 
 wpa_cli -i wlan0 enable_network 0 
 udhcpc -iwlan0
+====================================================================
+wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
 
+wpa_cli -i wlan0 add_network
+wpa_cli -i wlan0 set_network 0 ssid '"TP123"'
+wpa_cli -i wlan0 set_network 0 psk '"12345678"'
+wpa_cli -i wlan0 select_network 0 
+wpa_cli -i wlan0 enable_network 0 
+udhcpc -iwlan0
+
+====================================================================
+wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
+
+wpa_cli -i wlan0 add_network
+wpa_cli -i wlan0 set_network 0 ssid '"F017"'
+wpa_cli -i wlan0 set_network 0 psk '"0123456789"'
+wpa_cli -i wlan0 select_network 0 
+wpa_cli -i wlan0 enable_network 0 
+udhcpc -iwlan0
+
+
+./sev_net_test_cli_arm 23456 192.168.10.142 12345
+
+./rtwpriv wlan0 efuse_set wmap,10,2D2D2E2E2F2F29292B2D2D
+./rtwpriv wlan0 efuse_set wmap,10,2727282829292727292B2B
+./rtwpriv wlan0 efuse_get realmap
 
 占用ip的方法 先用udhcpc动态获取ip，再用ifconfig设置ip
 udhcpc
@@ -3646,3 +3681,24 @@ gcc -c -g simple_event_test.c  -o simple_event_test.o
 g++ simple_event.o simple_event_test.o simple_event_array.o -o stest
 
 g++ simple_event_array.cc simple_event_test.c simple_event.c -o ptest
+
+rm -rf CMakeFiles/ CMakeCache.txt
+cmake -DCMAKE_C_COMPILER=/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc
+/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-strip my_client
+./my_client 23456 192.168.100.124 12345
+
+/media/tcp_test 1 10 161.189.165.150 19011
+/media/tcp_test 1 10 192.168.100.253 19011
+
+/media/tcp_test 1 100 161.189.165.150 19011
+/media/tcp_test 1 100 161.189.165.150 19011
+/media/sev_net_test_cli_arm 23456 161.189.165.150 12345
+
+wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
+
+wpa_cli -i wlan0 add_network
+wpa_cli -i wlan0 set_network 0 ssid '"HUAWEI_B311_3C8C"'
+wpa_cli -i wlan0 set_network 0 psk '"55556666@11"'
+wpa_cli -i wlan0 select_network 0 
+wpa_cli -i wlan0 enable_network 0 
+udhcpc -iwlan0
