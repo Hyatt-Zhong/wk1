@@ -1546,6 +1546,7 @@ tensor([[ 0.1580,  0.1197,  0.0419, -0.1967],
 
 有一种神经网络模型叫做混合专家模型（Mixture of Experts），它可以根据输入的特征选择不同的隐藏层结构。具体来说，混合专家模型由多个专家网络组成，每个专家网络可以有不同的架构和参数。此外，还有一个称为门控网络（Gating Network）的部分，它根据输入特征来决定每个专家网络的权重，也就是说，它会根据输入的特征来选择最合适的专家网络或组合。
 
+
 import torch
 
 # 创建一个示例二维张量
@@ -3690,8 +3691,8 @@ cmake -DCMAKE_C_COMPILER=/home/mars/workspace/code/qzsdk/cross_compiler/toolchai
 /media/tcp_test 1 10 161.189.165.150 19011
 /media/tcp_test 1 10 192.168.100.253 19011
 
-/media/tcp_test 1 100 161.189.165.150 19011
-/media/tcp_test 1 100 161.189.165.150 19011
+/media/tcp_test 1 10 161.189.165.150 19011
+/media/tcp_test 1 10 161.189.165.150 19011
 /media/sev_net_test_cli_arm 23456 161.189.165.150 12345
 
 wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
@@ -3702,3 +3703,8 @@ wpa_cli -i wlan0 set_network 0 psk '"55556666@11"'
 wpa_cli -i wlan0 select_network 0 
 wpa_cli -i wlan0 enable_network 0 
 udhcpc -iwlan0
+
+/media/sev_quic_cli_arm3 23456 192.168.0.111 12345
+/media/sev_quic_cli_arm1 23456 192.168.0.111 12345
+
+

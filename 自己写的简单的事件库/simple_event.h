@@ -5,12 +5,15 @@
 
 typedef void (*cus_event_handler)(int fd, int event, int is_overtime, void *ctx);
 typedef void (*io_event_handler)(int fd, int event, void *ctx);
+typedef void (*timer_callback)(void *ctx);
+typedef void (*timer_param_free_callback)(void *ctx);
 
 typedef struct sev_base_
 {
     int epoll_fd;
     void *cus_event_list;
     void *io_event_list;
+    void *timer_list;
     int stop;
 } sev_base;
 
@@ -69,3 +72,6 @@ sev_io_event *new_io_event(int fd, int event, int persist, io_event_handler hd, 
 int add_io_event(sev_base *base, sev_io_event *ev);
 int remove_io_event(sev_base *base, int fd);
 void free_io_event(sev_io_event *ev);
+
+int set_timer(sev_base *base, timer_callback tcb, timer_param_free_callback free_cb, void *param, struct timeval *overtime);
+

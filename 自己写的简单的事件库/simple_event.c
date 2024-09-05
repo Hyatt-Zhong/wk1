@@ -19,6 +19,9 @@ extern int _add_cus_event(void *ls, sev_custom_event *ev);
 extern void _remove_cus_event(void *ls, int event_id);
 extern int _cus_event_loop(sev_base *base);
 
+extern int _add_timer(void* ls, timer_param_free_callback tcb, timer_param_free_callback free_cb, void *param, struct timeval *overtime);
+extern int _timer_loop(sev_base *base);
+
 sev_base *sev_new_base()
 {
     sev_base *base = (sev_base *)calloc(1, sizeof(sev_base));
@@ -85,6 +88,7 @@ void sev_loop(sev_base *base)
 {
     while (!base->stop)
     {
+        _timer_loop(base);
         _cus_event_loop(base);
         _io_event_loop(base);
     }
@@ -182,4 +186,9 @@ int _io_event_loop(sev_base *base)
     }
 
     return 0;
+}
+
+int set_timer(sev_base *base, timer_callback tcb, timer_param_free_callback free_cb, void *param, struct timeval *overtime)
+{
+    return _add_timer(base->timer_list, tcb,free_cb,param,overtime);
 }

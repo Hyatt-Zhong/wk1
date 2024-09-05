@@ -1,4 +1,5 @@
 #include <map>
+#include <list>
 #include "simple_event_macro.h"
 #include "simple_event.h"
 
@@ -8,6 +9,19 @@ typedef map<int, sev_custom_event *> cus_ev_list;
 typedef map<int, sev_io_event *> io_ev_list;
 typedef map<int, sev_custom_event *>::iterator cus_ev_itor;
 typedef map<int, sev_io_event *>::iterator io_ev_itor;
+
+typedef struct timer_{
+    struct timeval *overtime;
+    struct timeval _overtime;
+    struct timeval start;
+
+    void* param;
+    timer_callback tcb;
+    timer_param_free_callback free_cb;
+}timer;
+
+typedef list<timer*> timer_list;
+typedef list<timer*>::iterator timer_itor;
 
 extern "C"
 {
@@ -22,6 +36,10 @@ extern "C"
     int _add_cus_event(void *ls, sev_custom_event *ev);
     void _remove_cus_event(void *ls, int event_id);
     int _cus_event_loop(sev_base *base);
+
+    int _add_timer(void* ls, timer_callback tcb, timer_param_free_callback free_cb, void *param, struct timeval *overtime);
+    int _timer_loop(sev_base *base);
+
 }
 
 void _make_list(sev_base *base)
@@ -33,10 +51,12 @@ void _make_list(sev_base *base)
 
     base->cus_event_list = (void *)new cus_ev_list;
     base->io_event_list = (void *)new io_ev_list;
+    base->timer_list  =(void*)new timer_list;
 }
 
 void _del_all_cus_event(void *ls);
 void _del_all_io_event(void *ls);
+void _del_all_timer(void *ls);
 void _clear_list(sev_base *base)
 {
     if (!base)
@@ -46,12 +66,15 @@ void _clear_list(sev_base *base)
 
     _del_all_cus_event(base->cus_event_list);
     _del_all_io_event(base->io_event_list);
+    _del_all_timer(base->timer_list);
 
     delete (cus_ev_list *)base->cus_event_list;
     delete (io_ev_list *)base->io_event_list;
+    delete (timer_list *)base->timer_list;
 
     base->cus_event_list = 0;
     base->io_event_list = 0;
+    base->timer_list = 0;
 }
 
 int _add_cus_event(void *ls, sev_custom_event *ev)
@@ -106,7 +129,7 @@ int _is_overtime(struct timeval *start, struct timeval *end, struct timeval *ove
 int _cus_event_loop(sev_base *base)
 {
     cus_ev_list *ev_list = (cus_ev_list *)base->cus_event_list;
-    INTERVAL_LOG(2000,"cus event size = %ld", ev_list->size());
+    // INTERVAL_LOG(2000,"cus event size = %ld", ev_list->size());
     for (cus_ev_itor it = ev_list->begin(); it != ev_list->end();)
     {
         sev_custom_event *ev = it->second;
@@ -138,6 +161,7 @@ int _cus_event_loop(sev_base *base)
 
             if (!ev->persist) // 不是一个常驻的事件
             {
+                // LOG("rm cus ev");
                 _remove_cus_event(ev_list,ev->event_id);
             }
             ev->handler(ev->event_id, trigger, is_overtime, ev->ctx);
@@ -180,7 +204,7 @@ sev_io_event *_get_io_event(void *ls, int fd)
 void _remove_io_event(void *ls, int (*epoll_remove_cb)(sev_base *base, int fd), sev_base *base)
 {
     io_ev_list *ev_list = (io_ev_list *)ls;
-    INTERVAL_LOG(2000,"io event size = %ld", ev_list->size());
+    // INTERVAL_LOG(2000,"io event size = %ld", ev_list->size());
     for (io_ev_itor it = ev_list->begin(); it != ev_list->end(); )
     {
         sev_io_event *ev = it->second;
@@ -214,4 +238,66 @@ void _del_all_io_event(void *ls)
 {
     io_ev_list *ev_list = (io_ev_list *)ls;
     ev_list->clear();
+}
+
+int _add_timer(void* ls, timer_callback tcb, timer_param_free_callback free_cb, void *param, struct timeval *overtime)
+{
+    timer_list *tm_list = (timer_list *)ls;
+
+    timer *tm = (timer *)calloc(1, sizeof(timer));
+    tm->tcb = tcb;
+    tm->free_cb = free_cb;
+    tm->param = param;
+
+    memcpy(&tm->_overtime, overtime, sizeof(struct timeval));
+    tm->overtime = &tm->_overtime;
+    gettimeofday(&tm->start, NULL);
+
+    tm_list->push_back(tm);
+
+    return 0;
+}
+
+int _timer_loop(sev_base *base)
+{
+    timer_list* tm_list = (timer_list *)base->timer_list;
+    // INTERVAL_LOG(3000, "timer_size %d",tm_list->size());
+    for (timer_itor it = tm_list->begin(); it != tm_list->end();)
+    {
+        timer* tm = *it;
+
+        struct timeval cur;
+        gettimeofday(&cur, NULL);
+
+        int is_overtime = _is_overtime(&tm->start, &cur, tm->overtime);
+        if (is_overtime)
+        {
+            if (tm->tcb)
+            {
+                tm->tcb(tm->param);
+            }
+            if (tm->free_cb)
+            {
+                tm->free_cb(tm->param);
+            }
+            
+            it = tm_list->erase(it);
+            free(tm);
+        }
+        else {++it;}
+    }
+    return 0;
+}
+
+void _del_all_timer(void *ls)
+{
+    timer_list* tm_list = (timer_list *)ls;
+    for (timer_itor it = tm_list->begin(); it != tm_list->end();++it)
+    {
+        timer* tm = *it;
+        tm->free_cb(tm->param);
+        free(tm);
+    }
+
+    tm_list->clear();
 }
