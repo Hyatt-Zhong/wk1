@@ -1736,6 +1736,7 @@ Lixun1973
 
 rm -rf /media/2024* /media/coredum* /media/1970* /media/*.alaw /media/*_*.mp4
 
+umount /mnt/extsd
 mount --bind /media/extsd /mnt/extsd
 cp -r /tmp/nfs_share/extsd/ /media/extsd/
 /mnt/extsd/demo_rtsp -path /mnt/extsd/venc_0.conf &
@@ -1744,6 +1745,7 @@ cp -r /tmp/nfs_share/extsd/ /media/extsd/
 /media/rw_cfg.sh
 
 killall demo_rtsp
+killall demo_rtsp_rec
 
 
 删除size为0的(乱码)文件
@@ -3708,3 +3710,11 @@ udhcpc -iwlan0
 /media/sev_quic_cli_arm1 23456 192.168.0.111 12345
 
 
+./echo_server -s 127.0.0.1:12345
+./echo_client -H localhost -s 127.0.0.1:12345
+
+/mnt/hgfs/share/lsquic_full/lsquic_mini_v2/quic# ./sev_net_test_svr_x86 12345
+/media/libquic_test_arm 23456 192.168.0.111 12345
+
+#repo 清理未跟踪及修改
+repo forall -c 'git reset --hard && git clean -fd'
