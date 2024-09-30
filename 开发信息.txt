@@ -56,6 +56,11 @@ nfs:
 /usr/bin 
 zrt_app daemon_app
 
+vim 全选 ggVG （区分大小写）
+跳转到文件的开始：按 gg 以跳转到文件的第一行。
+进入可视行模式：按 V 以进入可视行模式。
+跳转到文件的末尾：按 G 以选择从第一行到最后一行的所有内容。
+
 根目录
 cd /
 
@@ -1631,7 +1636,8 @@ v851s3_vc  ## q1 ##v851s3 2+1 全时变焦2+1
 v851s3_vc2  ## q3 ##v851s3 2+1 全时变焦2+1
 v851s3_perf2 ## q2 ##v851s3 1+2
 v851s3_perf1 ## q4 ##v851s3 2+2
-v851se_perf1 ## p1 ##851se 1+2
+v851se_perf1_switch ## p1 ##851se 1+2
+v851se_perf1 ##851se 1+1
 主线版本    ##    ##Q851SE 1+1 
 
 [2024/5/23 13:36:13] /usr/bin/check_stream.sh
@@ -3677,6 +3683,15 @@ EPOLLERR：表示发生错误。这个事件对于所有类型的套接字都是
 EPOLLHUP：表示挂起/挂断。对于 UDP 套接字，这种情况很少见，但可能在某些罕见的错误情况下发生。
 
 EPOLLET：表示使用边缘触发模式。这对所有类型的套接字都适用，包括 UDP。边缘触发模式可以提高性能，但需要更加小心地处理，以确保不会错过任何事件。
+===================================================================================================
+在使用 epoll 时，判断对端 socket 是否关闭通常通过 read 函数返回值来实现。以下是具体的方法：
+
+read 返回值为 0: 当 read 函数返回 0 时，表示对端 socket 已经正常关闭连接。这是 TCP 连接中对端执行 close 操作的标志。
+
+read 返回 -1 并且 errno 为 EAGAIN 或 EWOULDBLOCK: 这表示当前没有数据可读，但连接仍然是打开的。需要继续等待数据。
+
+read 返回 -1 并且 errno 为其他错误: 这通常表示发生了某种错误，可以选择关闭连接。
+===================================================================================================
 
 g++ -c -g simple_event_array.cc -o simple_event_array.o
 gcc -c -g simple_event.c  -o simple_event.o
@@ -3686,7 +3701,7 @@ g++ simple_event.o simple_event_test.o simple_event_array.o -o stest
 g++ simple_event_array.cc simple_event_test.c simple_event.c -o ptest
 
 rm -rf CMakeFiles/ CMakeCache.txt
-cmake -DCMAKE_C_COMPILER=/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc
+cmake -DCMAKE_C_COMPILER=/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc -DCMAKE_BUILD_TYPE=Release .
 /home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-strip my_client
 ./my_client 23456 192.168.100.124 12345
 
@@ -3718,3 +3733,74 @@ udhcpc -iwlan0
 
 #repo 清理未跟踪及修改
 repo forall -c 'git reset --hard && git clean -fd'
+
+使用 repo list 命令可以列出所有仓库及其路径，找到目标仓库的路径。
+
+某个命令的所有输出都到某个文件中
+cmd &> log.txt
+
+apt-get install build-essential subversion git-core libncurses5-dev zlib1g-dev gawk flex quilt libssl-dev xsltproc libxml-parser-perl mercurial bzr ecj cvs unzip lib32z1 lib32z1-dev lib32stdc++6 libstdc++6 -y libc6:i386 libstdc++6:i386 lib32ncurses5 lib32z1
+apt-get install build-essential subversion git-core libncurses5-dev zlib1g-dev gawk flex quilt libssl-dev xsltproc libxml-parser-perl mercurial bzr ecj cvs unzip lib32z1 lib32z1-dev lib32stdc++6 libstdc++6 -y libc6:i386 libstdc++6:i386 lib32z1
+
+/home/mars/workspace/code/qzsdk/cross_compiler/toolchain/bin/arm-openwrt-linux-gcc 
+
+使用power shell从windows拷贝文件到linux
+scp "C:\share\speed_test_svr.c" puwell@161.189.165.150:/home/puwell/ipc_service/speed_test
+
+scp C:\AMTAG.BIN  root@192.168.23.128:/extern/test
+
+root@192.168.23.128表示root用户用ssh方式连接192.168.23.128
+
+
+使用 cp 命令结合通配符 {} 来减少重复输入路径进行拷贝
+cp /extern/dir/path/{A,B,C} .
+
+===================================================================================================
+你也可以通过查看进程列表来检查服务是否在运行：
+
+使用 ps 命令结合 grep：
+ps aux | grep <service_name>
+
+例如：
+ps aux | grep nginx
+
+这将显示所有与nginx相关的进程。如果看到相关条目，说明服务正在运行。
+使用 pgrep 命令
+pgrep 命令可以直接查找进程 ID：
+
+使用 pgrep 命令：
+pgrep <service_name>
+
+例如：
+pgrep nginx
+
+如果返回一个或多个进程 ID，说明服务正在运行。
+使用 netstat 或 ss 命令
+如果你知道服务监听的端口，可以通过查看端口是否被监听来确定服务是否在运行：
+
+使用 netstat 命令：
+
+sudo netstat -tuln | grep <port_number>
+
+例如，检查nginx是否在监听80端口：
+
+sudo netstat -tuln | grep 80
+
+使用 ss 命令：
+
+sudo ss -tuln | grep <port_number>
+
+例如：
+
+sudo ss -tuln | grep 80
+
+===================================================================================================
+speed_test_cli 1 100 161.189.165.150 8987
+
+/home/puwell/ipc_service/speed_test
+./run_speed_test_svr_10_minute.sh
+
+===================================================================================================
+1. CONFIG_SUPPORT_PACK_OUT_OF_TINA
+2. .config 
+3.
