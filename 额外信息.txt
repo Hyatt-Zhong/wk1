@@ -102,3 +102,107 @@ https://blog.csdn.net/weixin_43198122/article/details/119377985
 记忆是稀有的而非普遍的，不断的输入不同的信号但相同语义但来刺激记忆
 记忆除了记忆语义更多的是事物的关系，而且很多时候关系比事物的语义更重要，比如自动驾驶我不用一定要知道我前面的是什么，我只需知道不要撞他就好了
 语音也只需记住特定的信号就行了，也就是音素，语言是要学习的，也就是需要去侧重记忆一些音素，而对不侧重记忆的音素，可以当作噪音
+
+
+===========================================================================
+PyTorch中的张量（Tensor）支持各种运算，涵盖了标量、向量、矩阵和张量运算。这些运算包括基本的算术运算、矩阵运算、逻辑运算、索引、形状操作等。以下是PyTorch张量支持的一些常见运算类别：
+
+1. 基本算术运算
++ / torch.add(tensor1, tensor2)：逐元素相加
+- / torch.sub(tensor1, tensor2)：逐元素相减
+* / torch.mul(tensor1, tensor2)：逐元素相乘
+/ / torch.div(tensor1, tensor2)：逐元素相除
+torch.pow(tensor, exponent)：幂运算
+torch.exp(tensor)：指数运算
+torch.sqrt(tensor)：平方根
+torch.log(tensor)：自然对数
+2. 矩阵和向量运算
+torch.matmul(tensor1, tensor2)：矩阵乘法
+@：矩阵乘法的简写，类似于 torch.matmul
+torch.mm(tensor1, tensor2)：二维张量（矩阵）的矩阵乘法
+torch.bmm(batch1, batch2)：批量矩阵乘法
+torch.mv(matrix, vector)：矩阵与向量相乘
+torch.dot(vector1, vector2)：向量点积
+torch.cross(tensor1, tensor2)：向量叉积（3D向量）
+3. 归约运算
+torch.sum(tensor)：所有元素求和
+torch.mean(tensor)：计算平均值
+torch.median(tensor)：计算中位数
+torch.prod(tensor)：所有元素求积
+torch.std(tensor)：计算标准差
+torch.var(tensor)：计算方差
+torch.max(tensor) / torch.min(tensor)：最大值/最小值
+torch.argmax(tensor) / torch.argmin(tensor)：最大值/最小值的索引位置
+4. 逻辑和比较运算
+torch.eq(tensor1, tensor2)：逐元素相等比较
+torch.ne(tensor1, tensor2)：逐元素不等比较
+torch.gt(tensor1, tensor2)：逐元素大于比较
+torch.ge(tensor1, tensor2)：逐元素大于等于比较
+torch.lt(tensor1, tensor2)：逐元素小于比较
+torch.le(tensor1, tensor2)：逐元素小于等于比较
+torch.logical_and(tensor1, tensor2)：逐元素逻辑与
+torch.logical_or(tensor1, tensor2)：逐元素逻辑或
+torch.logical_not(tensor)：逐元素逻辑非
+5. 索引与切片
+tensor[index]：索引操作
+tensor[start:end]：切片操作
+torch.index_select(tensor, dim, index)：在指定维度上选择索引
+6. 形状操作
+tensor.view(shape)：改变张量的形状
+tensor.reshape(shape)：改变张量的形状（类似于 view，但更灵活）
+tensor.transpose(dim0, dim1)：交换两个维度
+tensor.permute(dims)：任意维度的置换
+tensor.unsqueeze(dim)：在指定位置增加维度
+tensor.squeeze(dim)：去除指定维度（如果该维度大小为1）
+torch.cat((tensor1, tensor2), dim)：在指定维度上拼接
+torch.stack((tensor1, tensor2), dim)：在新维度上堆叠张量
+7. 广播机制
+PyTorch张量支持广播（Broadcasting），当两个张量形状不同但某些维度兼容时，PyTorch会自动扩展张量的维度以执行逐元素操作。例如：
+
+a = torch.tensor([1, 2, 3])
+b = torch.tensor([[1], [2], [3]])
+c = a + b  # 广播机制将a扩展为(3,3)
+
+8. 随机数生成
+PyTorch提供了大量的随机数生成函数：
+
+torch.rand(size)：生成在[0, 1)区间内的均匀分布随机数
+torch.randn(size)：生成均值为0、标准差为1的正态分布随机数
+torch.randint(low, high, size)：生成在给定范围内的整数随机数
+torch.bernoulli(tensor)：伯努利分布（二项分布的特例）随机数
+torch.normal(mean, std)：正态分布随机数
+9. 线性代数运算
+torch.inverse(tensor)：矩阵求逆
+torch.det(tensor)：矩阵行列式
+torch.svd(tensor)：奇异值分解（SVD）
+torch.eig(tensor)：特征值和特征向量
+torch.cholesky(tensor)：Cholesky分解
+torch.qr(tensor)：QR分解
+torch.solve(b, A)：解线性方程组
+torch.pinverse(tensor)：伪逆矩阵
+10. 其他操作
+torch.clone(tensor)：复制张量
+torch.equal(tensor1, tensor2)：判断两个张量是否相等
+torch.all(tensor)：所有元素是否为True
+torch.any(tensor)：是否存在元素为True
+tensor.detach()：从计算图中分离张量（不会计算梯度）
+tensor.cpu() / tensor.cuda()：在CPU和GPU之间移动张量
+11. 自动求导
+PyTorch中张量支持自动求导，尤其是在深度学习中非常有用。通过 requires_grad=True 标记张量可以追踪其操作并自动计算梯度。
+
+tensor.backward()：对张量进行反向传播，计算梯度
+tensor.grad：访问张量的梯度
+12. GPU/加速运算
+PyTorch支持GPU加速运算，通过将张量移动到GPU上进行计算：
+
+tensor.cuda()：将张量移动到GPU
+tensor.to(device)：将张量移动到指定设备（如GPU/CPU）
+13. 其他工具函数
+torch.clone(tensor)：复制张量
+torch.numel(tensor)：计算张量中的元素个数
+torch.norm(tensor)：计算张量的范数
+torch.where(condition, x, y)：根据条件返回 x 或 y 的元素
+14. 高级运算
+torch.gradient(tensor)：计算张量的梯度
+torch.autograd.grad(outputs, inputs)：计算输入相对于输出的梯度
+这些只是PyTorch张量运算的一部分，PyTorch库非常强大，还有很多其他的运算可以用来构建复杂的计算图和进行高效的数值计算。

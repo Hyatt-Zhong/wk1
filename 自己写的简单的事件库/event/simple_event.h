@@ -25,6 +25,7 @@ typedef struct sev_io_event_
     int fd;
     int persist;
     int remove;
+    int free;
 } sev_io_event;
 
 enum CUSTOM_EVENT
@@ -38,7 +39,8 @@ enum SEV_IO_EVENT
 {
     SEV_IO_READABLE = 0x1,
     SEV_IO_WRITEABLE = 0x2,
-    SEV_IO_ERROR = 0x4,
+    SEV_IO_HANGUP = 0x4,
+    SEV_IO_ERROR = 0x8,
 };
 
 typedef struct sev_custom_event_
@@ -61,16 +63,17 @@ typedef struct sev_custom_event_
 sev_base *sev_new_base();
 void sev_free_base(sev_base *base);
 void sev_loop(sev_base *base);
+void sev_stop(sev_base *base);
 
 sev_custom_event *new_cus_event(int id, int event, int persist, cus_event_handler hd, void *ctx);
 int add_cus_event(sev_base *base, sev_custom_event *ev, struct timeval *overtime);
 int active_cus_event(sev_custom_event *ev, int event);
-int remove_cus_event(sev_base *base, int event_id);
+int remove_cus_event(sev_base *base, int event_id, int free);
 void free_cus_event(sev_custom_event *ev);
 
 sev_io_event *new_io_event(int fd, int event, int persist, io_event_handler hd, void *ctx);
 int add_io_event(sev_base *base, sev_io_event *ev);
-int remove_io_event(sev_base *base, int fd);
+int remove_io_event(sev_base *base, int fd, int free);
 void free_io_event(sev_io_event *ev);
 
 int set_timer(sev_base *base, timer_callback tcb, timer_param_free_callback free_cb, void *param, struct timeval *overtime);

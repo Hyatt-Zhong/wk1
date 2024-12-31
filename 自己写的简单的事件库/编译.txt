@@ -1,4 +1,7 @@
-g++ -c -g simple_event_array.cc -o simple_event_array.o
-gcc -c -g simple_event.c  -o simple_event.o
-gcc -c -g simple_event_test.c  -o simple_event_test.o
-g++ simple_event.o simple_event_test.o simple_event_array.o -o stest
+#simple_event_test 可能编译不过
+INC = -I./event
+
+g++ -c -g event/simple_event_array.cc -o event/simple_event_array.o
+gcc -c -g event/simple_event.c  -o event/simple_event.o
+gcc -c -g simple_event_test.c $(INC) -o simple_event_test.o
+g++ event/simple_event_array.o event/simple_event.o simple_event_test.o  -g -o stest

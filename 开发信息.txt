@@ -128,6 +128,7 @@ ctrl + u
 udhcpc
 mkdir /tmp/nfs_share
 mount -o vers=4 192.168.99.193:/home/mars/nfs_share /tmp/nfs_share
+mount -o vers=4 192.168.0.111:/home/mars/nfs_share /tmp/nfs_share
 
 cp zrt_app /home/mars/nfs_share/zrt_app
 cp zrt_app.debug /home/mars/nfs_share/dbg_zrt_app
@@ -800,6 +801,9 @@ wpa_cli -i wlan0 select_network 0
 wpa_cli -i wlan0 enable_network 0 
 udhcpc -iwlan0
 
+ mkdir /tmp/nfs_share
+ mount -o vers=4 192.168.0.111:/home/mars/nfs_share /tmp/nfs_share
+
 
 ./sev_net_test_cli_arm 23456 192.168.10.142 12345
 
@@ -1078,6 +1082,7 @@ svn status | grep '\.c$'
 
 
 Tina_Linux_系统软件_开发指南.pdf
+Tina_Linux_多媒体MPP_开发指南.pdf
 
 
 
@@ -1235,6 +1240,7 @@ echo 1 > /sys/class/gpio/gpio96/value
 
 cat /sys/kernel/debug/mpp/isp
 cat /sys/kernel/debug/mpp/ve_*
+cat /sys/kernel/debug/mpp/vi
 
 ffmpeg -f alaw -ar 8000 -ac 1 -i upgrade_start.pcma -vcodec copy test.mp4
 
@@ -1589,6 +1595,10 @@ PhoenixCard.exe
 fw_setenv mac 40:6A:8E:FF:38:0F
 fw_setenv mac_sign 6d428d1d72f3c9c0b79b118105616dcc
 
+小蛋
+fw_setenv mac 40:6A:8E:FF:38:A5
+fw_setenv mac_sign 37f94333bad1bb0a5fb4f2ea97d322a7
+
 开机脚本
 /home/mars/workspace/code/qzsdk/branch/threelens_switch/pack_threelens_switch/assets/etc/init.d/run_16M.sh
 
@@ -1638,7 +1648,11 @@ v851s3_perf2 ## q2 ##v851s3 1+2
 v851s3_perf1 ## q4 ##v851s3 2+2
 v851se_perf1_switch ## p1 ##851se 1+2
 v851se_perf1 ##851se 1+1
+v853s_perf1 ## p3 ##v853s 2+1 三目
 主线版本    ##    ##Q851SE 1+1 
+
+
+白色的拼接相机就用v851se_perf1 ##851se 1+1 做固件
 
 [2024/5/23 13:36:13] /usr/bin/check_stream.sh
 [2024/5/23 13:36:13] =======check video node =========
@@ -3780,7 +3794,7 @@ pgrep nginx
 
 使用 netstat 命令：
 
-sudo netstat -tuln | grep <port_number>
+sudo netstat -tuln | grep <port _number>
 
 例如，检查nginx是否在监听80端口：
 
@@ -3804,3 +3818,134 @@ speed_test_cli 1 100 161.189.165.150 8987
 1. CONFIG_SUPPORT_PACK_OUT_OF_TINA
 2. .config 
 3.
+
+===================================================================================================
+临时设置 LD_LIBRARY_PATH（只对当前终端有效）
+export LD_LIBRARY_PATH=/opt/openssl-1.0.2u/lib:$LD_LIBRARY_PATH
+
+./sdkTest --user 15988184546 --passwd puwell119 --ipc sh.ipc365.com
+
+
+ -D_USE_MP4 -Dxprint\(fmt\,...\)=printf\(\"\%s:\"\"\#\#mp4\#\#\ \"fmt\"\\n\"\,__func__\,\#\#__VA_ARGS__\)
+
+ /media/simu_quic_arm 23456 192.168.0.111 12345 66000
+
+ mkdir /tmp/nfs_share
+ mount -o vers=4 192.168.0.111:/home/mars/nfs_share /tmp/nfs_share
+
+ cp output/demo_rtsp $nfss/demo_rtsp_viveset 
+demo_rtsp相关
+需把html资源./platform/partition/to_rootfs/rtsp_conf/www拷贝到/mnt/extsd/   
+启动前udhcpc获取ip地址
+web控制 浏览器直接访问ip
+vlc看流rtsp://ip:8554/ch0
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/media/net_capture
+/media/net_capture/tcpdump -i wlan0 -w /media/net_capture/capture.pcap &
+/media/net_capture/tcpdump -i eth0 -w /media/net_capture/capture.pcap &
+ll /media/net_capture/capture.pcap
+
+视频分析eseye_u.exe
+
+注意用tcp时只用一个流
+zrt_app_native 原生 tcp 外网
+zrt_app_tcp_que tcp 外网 que
+zrt_app_tcp142 tcp 142 que
+
+/extern/v821/prebuilt/rootfsbuilt/riscv/nds32le-linux-musl-v5d/bin/riscv32-linux-musl-g++  -o HalNN  HalNN.c -I ./ -I ./include -I lib_aw/include/eyesee-mpp/middleware/include/media/ -I lib_aw/include/eyesee-mpp/middleware/include/utils/ -I lib_aw/include/eyesee-mpp/middleware/media/include/ -I lib_aw/include/eyesee-mpp/middleware/media/include/component/ -I lib_aw/include/eyesee-mpp/middleware/media/include/utils/ -I lib_aw/include/eyesee-mpp/middleware/media/LIBRARY/libisp/include/V4l2Camera/ -I lib_aw/include/eyesee-mpp/middleware/media/LIBRARY/libisp/include/ -I lib_aw/include/eyesee-mpp/middleware/media/LIBRARY/libisp/isp_tuning/ -I lib_aw/include/eyesee-mpp/middleware/media/LIBRARY/libisp/ -I lib_aw/include/eyesee-mpp/middleware/media/LIBRARY/libisp/include/device/ -I lib_aw/include/libcedarc/include/ -I lib_aw/include/libcedarc/base/include/ -I person_detection/src/include/ -I person_detection/src/3rdparty/include/  -L./lib_aw/lib/  -L./lib_aw/lib/eyesee-mpp/   -L./lib_aw/lib/libcedarc/   -L./lib_aw/lib/awion/  -L./lib_aw/lib/expat/  -L./person_detection/src/lib/musl/ -L./person_detection/src/3rdparty/lib/musl -law_mpp -llog  -lmedia_utils -ladecoder -lwav -lcedarx_aencoder -lAgc -lAns -lAec  -lResample -lAudioVps -lvencoder -lcdc_base -lcdc_base -lexpat -lvenc_base -lvenc_common -lMemAdapter -lcdc_base -lVE -lvenc_h264 -lvenc_jpeg -lISP -lisp_dev -lisp_ini -liniparser -lisp_ae -lisp_af -lisp_afs -lisp_awb -lisp_base -lisp_gtm -lisp_iso -lisp_math -lisp_md -lisp_pltm -lisp_rolloff -lawion -lcdc_base -lvenc_h264 -lVE -lvenc_base -lvenc_jpeg -lvenc_h264 -lvenc_common  -law_utilities_standalone_v821 -law_person_det_nn_v821 -law_person_det_v821 -lnn_p -lnn_qt_dq_p -lasound -lglog 
+
+make CXX=/extern/v821/prebuilt/rootfsbuilt/riscv/nds32le-linux-musl-v5d/bin/riscv32-linux-musl-g++ PERSON_DETECTION_LIBC=musl
+
+-Wl,--start-group libA.a libB.a libC.a -Wl,--end-group
+
+链接器会将 libA.a、libB.a 和 libC.a 作为一个组进行多次扫描，确保所有符号依赖都被正确解析。
+
+/extern/v821/prebuilt/rootfsbuilt/riscv/nds32le-linux-musl-v5d/bin/riscv32-linux-musl-nm src/device_tina/pdet/src/lib/glibc/libnn_qt_dq_p.a | grep riscv_nn_dequantize_s8_f32
+
+cat /proc/mtd 查看各个分区大小
+
+修改了make menuconfig之后需要
+./build config
+
+clock_gettime(CLOCK_REALTIME, &ts);
+gettimeofday
+
+
+
+            ZRT_SYS_CmdCall("rm -rf /media/temp");
+            ZRT_SYS_CmdCall("mkdir /media/temp");
+            ZRT_SYS_CmdCall("cp /var/log/* /config/cfg.txt /config/default_cfg.txt /media/temp");
+            ZRT_SYS_CmdCall("sync");
+
+
+export LD_LIBRARY_PATH=/media:$LD_LIBRARY_PATH
+cat /sys/kernel/debug/mpp/vi
+
+copy /y zrt_app D:\
+copy /y C:\share\lightning_port\zrt_app D:\
+
+/usr/bin/check_stream.sh > /media/log/stream_dump.txt
+
+print_SD_BIT 检查sdc卡状态
+
+static struct Country_Router router_list[20] =
+{
+		//default ip
+		{ "sh.ipc365.com",	"192.168.10.241"},
+		{ "ca.ipc365.com",	"192.168.10.241"},
+		{ "ru.ipc365.com",	"192.168.10.241"},
+		{ "fr.ipc365.com",	"192.168.10.241"},
+		{ "sp.ipc365.com",	"192.168.10.241"},
+		{ "sg.ipc365.com",	"192.168.10.241"},
+		{ "", ""}
+};
+
+1. 进入 nano 编辑器的界面
+当你运行 svn commit 时，默认会打开 nano 编辑器，屏幕上会显示类似以下的内容：
+
+--This line, and those below, will be ignored--
+
+A    newfile.txt
+M    modifiedfile.txt
+D    deletedfile.txt
+--This line, and those below, will be ignored--：表示这些行不会被作为提交日志的一部分。通常这些行会列出此次提交中新增（A）、修改（M）或删除（D）的文件，供你参考。
+你可以在第一行开始输入你的提交日志。
+2. 编辑提交日志
+在 nano 编辑器中，直接输入你的提交信息。例如：
+
+Fixing a bug in the login module.
+Added error handling for empty username and password fields.
+这段文字将作为你的提交日志，描述你这次提交的更改内容。
+
+3. 保存并退出 nano
+完成提交日志的编辑后，需要保存并退出 nano 编辑器。按照以下步骤操作：
+
+保存文件：
+
+按下 Ctrl + O（表示 "Write Out"，写入文件）。
+屏幕底部会提示你保存的文件名（通常是临时文件名，例如 .svn-commit.tmp）。
+直接按回车（Enter）确认。
+退出编辑器：
+
+按下 Ctrl + X（表示 "Exit"，退出编辑器）。
+4. 完成提交
+退出 nano 后，SVN 会自动读取提交日志并完成提交。你会看到类似以下的输出：
+
+Sending        modifiedfile.txt
+Adding         newfile.txt
+Deleting       deletedfile.txt
+Transmitting file data ...
+Committed revision 123.
+这表示提交成功，新的修订版本号是 123。
+
+5. 如何避免进入 nano 编辑器
+如果你不想每次都进入 nano 编辑器，可以在命令行中直接通过 -m 参数指定提交日志。例如：
+
+svn commit -m "Fixing a bug in the login module."
+这样，SVN 会直接使用你在 -m 参数中指定的提交日志，而不会打开 nano 编辑器。
+
+ping: gerritsdk.allwinnertech.com: Temporary failure in name resolution  
+这是dns解析失败，需要配置/etc/resolv.conf 
+追加
+nameserver 1.1.1.1
+nameserver 8.8.8.8

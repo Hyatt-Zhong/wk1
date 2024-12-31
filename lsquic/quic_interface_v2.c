@@ -269,10 +269,16 @@ static void quic_client_on_read(lsquic_stream_t *stream, lsquic_stream_ctx_t *st
     char buf[1024] = {0};
 
     int rlen = 0;
-    while (rlen = lsquic_stream_read(stream, buf, sizeof(buf)) > 0)
+    do
     {
-        ctrl_ctx->fn_data(ctrl_ctx->cb_param, buf, rlen);
-    }
+        rlen = lsquic_stream_read(stream, buf, sizeof(buf));
+        
+        if (rlen>0)
+        {
+            ctrl_ctx->fn_data(ctrl_ctx->cb_param, buf, rlen);
+        }
+        
+    } while (rlen > 0);
 
     lsquic_stream_wantread(stream, 1);
 }

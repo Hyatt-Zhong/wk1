@@ -30,7 +30,7 @@ extern "C"
 
     int _add_io_event(void *ls, sev_io_event *ev);
     sev_io_event *_get_io_event(void *ls, int fd);
-    void _set_io_event_remove(void *ls, int fd);
+    void _set_io_event_remove(void *ls, int fd, int free);
     void _remove_io_event(void *ls, int (*epoll_remove_cb)(sev_base *base, int fd), sev_base *base);
 
     int _add_cus_event(void *ls, sev_custom_event *ev);
@@ -213,6 +213,10 @@ void _remove_io_event(void *ls, int (*epoll_remove_cb)(sev_base *base, int fd), 
             epoll_remove_cb(base, ev->fd);
             it = ev_list->erase(it);
             ev->remove = 0;//移除标志重置为0，因为事件是可以复用的
+            if (ev->free)
+            {
+                free(ev);
+            }
         }
         else
         {
@@ -221,7 +225,7 @@ void _remove_io_event(void *ls, int (*epoll_remove_cb)(sev_base *base, int fd), 
     }
 }
 
-void _set_io_event_remove(void *ls, int fd)
+void _set_io_event_remove(void *ls, int fd, int free)
 {
     io_ev_list *ev_list = (io_ev_list *)ls;
     if (!ev_list)
@@ -232,6 +236,7 @@ void _set_io_event_remove(void *ls, int fd)
     if (it != ev_list->end())
     {
         it->second->remove = 1;
+        it->second->free = free;
     }
 }
 void _del_all_io_event(void *ls)

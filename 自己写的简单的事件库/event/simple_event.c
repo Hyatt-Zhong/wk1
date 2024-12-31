@@ -12,7 +12,7 @@ extern void _clear_list(sev_base *base);
 
 extern int _add_io_event(void *ls, sev_io_event *ev);
 extern sev_io_event *_get_io_event(void *ls, int fd);
-extern void _set_io_event_remove(void *ls, int fd);
+extern void _set_io_event_remove(void *ls, int fd, int free);
 extern void _remove_io_event(void *ls, int (*epoll_remove_cb)(sev_base *base, int fd), sev_base *base);
 
 extern int _add_cus_event(void *ls, sev_custom_event *ev);
@@ -77,7 +77,7 @@ int active_cus_event(sev_custom_event *ev, int event)
     return 0;
 }
 
-int remove_cus_event(sev_base *base, int event_id)
+int remove_cus_event(sev_base *base, int event_id, int free)
 {
     _remove_cus_event(base->cus_event_list, event_id);
     return 0;
@@ -93,6 +93,10 @@ void sev_loop(sev_base *base)
         _io_event_loop(base);
     }
 }
+void sev_stop(sev_base *base)
+{
+    base->stop = 1;
+}
 
 sev_io_event *new_io_event(int fd, int event, int persist, io_event_handler hd, void *ctx)
 {
@@ -105,7 +109,8 @@ sev_io_event *new_io_event(int fd, int event, int persist, io_event_handler hd, 
     int listen = 0;
     event &SEV_IO_READABLE ? listen |= EPOLLIN : 0;
     event &SEV_IO_WRITEABLE ? listen |= EPOLLOUT : 0;
-    event &SEV_IO_ERROR ? listen |= (EPOLLERR | EPOLLHUP) : 0;
+    event &SEV_IO_HANGUP ? listen |= EPOLLHUP : 0;
+    event &SEV_IO_ERROR ? listen |= EPOLLERR : 0;
     persist == 0 ? listen |= EPOLLONESHOT : 0;
     ev->event.events = listen;
     ev->event.data.fd = fd;
@@ -143,10 +148,10 @@ int epoll_remove_cb(sev_base *base, int fd)
     return res;
 }
 
-int remove_io_event(sev_base *base, int fd)
+int remove_io_event(sev_base *base, int fd, int free)
 {
     //只对要删除的事件打个标记
-    _set_io_event_remove(base->io_event_list, fd);
+    _set_io_event_remove(base->io_event_list, fd, free);
     return 0;
 }
 
@@ -156,7 +161,7 @@ int _io_event_loop(sev_base *base)
     _remove_io_event(base->io_event_list,epoll_remove_cb,base);//这里才是真正删除事件
 
     struct epoll_event events[MAX_EVENTS];
-    int nfds = epoll_wait(base->epoll_fd, events, MAX_EVENTS, 1 /*无事件时阻塞1ms*/);
+    int nfds = epoll_wait(base->epoll_fd, events, MAX_EVENTS, 1/*1*/ /*无事件时阻塞1ms*/);
     if (nfds == -1)
     {
         LOG("epoll_wait ERROR.");
@@ -170,14 +175,15 @@ int _io_event_loop(sev_base *base)
         int status = 0;
         eev &EPOLLIN ? status |= SEV_IO_READABLE : 0;
         eev &EPOLLOUT ? status |= SEV_IO_WRITEABLE : 0;
-        (eev & EPOLLERR) || (eev & EPOLLHUP) ? status |= SEV_IO_ERROR : 0;
+        eev & EPOLLHUP ? status |= SEV_IO_HANGUP : 0;
+        eev & EPOLLERR ? status |= SEV_IO_ERROR : 0;
 
-        int fd = events->data.fd;
+        int fd = events[i].data.fd;
         sev_io_event *ev = _get_io_event(base->io_event_list, fd);
 
         if (!ev->persist)
         {
-            remove_io_event(base, fd);
+            remove_io_event(base, fd, 0);
         }
         if (ev)
         {
