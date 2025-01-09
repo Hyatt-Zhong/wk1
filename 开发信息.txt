@@ -3949,3 +3949,4 @@ ping: gerritsdk.allwinnertech.com: Temporary failure in name resolution
 追加
 nameserver 1.1.1.1
 nameserver 8.8.8.8
+
